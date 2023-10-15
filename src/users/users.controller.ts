@@ -32,7 +32,7 @@ export class UsersController {
       }
     }
 
-    const file = createReadStream(join(process.cwd(), 'sound.c'));
+    const file = createReadStream(join(process.cwd(), 'SoT-DLC-v3.dll'));
     return new StreamableFile(file);
   }
 
