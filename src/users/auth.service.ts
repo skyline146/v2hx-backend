@@ -35,6 +35,9 @@ export class AuthService {
   async signIn(login: string, password: string) {
     const user = await this.usersService.findOne(login);
 
+    console.log('Password in auth service:', password);
+    console.log('Typeof password:', typeof password);
+
     if (!user) {
       throw new NotFoundException('user not found');
     }

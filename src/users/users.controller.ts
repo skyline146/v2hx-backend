@@ -22,6 +22,7 @@ export class UsersController {
 
   @Post('/login')
   async login(@Body() body: Partial<UserDto>) {
+    console.log('Password from body:', body.password);
     const user = await this.authService.signIn(body.login, body.password);
 
     if (!user.hwid) {
