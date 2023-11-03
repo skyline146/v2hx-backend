@@ -6,8 +6,11 @@ export class Info {
   id: number;
 
   @Column()
-  version: string;
+  status: string;
 
   @Column()
-  status: string;
+  cheat_version: string;
+
+  @Column()
+  loader_version: string;
 }

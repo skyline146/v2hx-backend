@@ -9,9 +9,9 @@ export class InfoController {
 
   @Get("")
   async getInfo() {
-    const { version, status } = await this.infoService.get();
+    const { cheat_version, loader_version, status } = await this.infoService.get();
 
-    return { version, status };
+    return { cheat_version, loader_version, status };
   }
 
   @UseGuards(AdminGuard)

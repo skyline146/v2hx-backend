@@ -5,5 +5,8 @@ export class InfoDto {
   status: string;
 
   @IsString()
-  version: string;
+  cheat_version: string;
+
+  @IsString()
+  loader_version: string;
 }

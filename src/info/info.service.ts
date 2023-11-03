@@ -9,11 +9,11 @@ export class InfoService {
   constructor(@InjectRepository(Info) private infoRepo: Repository<Info>) {}
 
   async get() {
-    return await this.infoRepo.findOne({ where: { version: undefined } });
+    return await this.infoRepo.findOne({ where: { cheat_version: undefined } });
   }
 
   async update(data: Partial<InfoDto>) {
-    const info = await this.infoRepo.findOne({ where: { version: undefined } });
+    const info = await this.infoRepo.findOne({ where: { cheat_version: undefined } });
 
     await this.infoRepo.save(this.infoRepo.merge(info, data));
   }
