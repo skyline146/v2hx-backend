@@ -1,18 +1,41 @@
-import { IsString, IsDate, IsNumber } from 'class-validator';
+import { IsString, IsDate, IsNumber, IsBoolean } from "class-validator";
+import { Exclude } from "class-transformer";
 
 export class UserDto {
   @IsString()
-  login: string;
+  username: string;
 
   @IsString()
+  @Exclude()
   password: string;
 
   @IsString()
-  hwid: string;
+  @Exclude()
+  hdd: string;
 
   @IsString()
-  last_hwid: string;
+  @Exclude()
+  last_hdd: string;
+
+  @IsString()
+  @Exclude()
+  mac_adress: string;
+
+  @IsString()
+  @Exclude()
+  last_mac_adress: string;
 
   @IsNumber()
-  expire_date: number;
+  @Exclude()
+  warn: number;
+
+  @IsBoolean()
+  @Exclude()
+  ban: boolean;
+
+  expire_date: Date;
+
+  constructor(partial: Partial<UserDto>) {
+    Object.assign(this, partial);
+  }
 }

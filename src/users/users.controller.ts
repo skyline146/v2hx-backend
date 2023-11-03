@@ -3,63 +3,76 @@ import {
   Controller,
   Get,
   Post,
-  ForbiddenException,
   NotFoundException,
-  StreamableFile,
-} from '@nestjs/common';
-import { createReadStream } from 'fs';
-import { join } from 'path';
-import { UsersService } from './users.service';
-import { UserDto } from './dtos/user.dto';
-import { AuthService } from './auth.service';
+  UseGuards,
+  Delete,
+  Query,
+  BadRequestException,
+  Request,
+  Param,
+  Patch,
+} from "@nestjs/common";
+import { UsersService } from "./users.service";
+import { UserDto } from "./dtos/user.dto";
+import { AuthService } from "../auth/auth.service";
+import { AdminGuard } from "src/guards/admin.guard";
+import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
+import { ChangeUserDto } from "./dtos/change-user.dto";
 
-@Controller('users')
+@UseGuards(JwtAuthGuard)
+@Controller("users")
 export class UsersController {
-  constructor(
-    private usersService: UsersService,
-    private authService: AuthService,
-  ) {}
+  constructor(private readonly usersService: UsersService, private authService: AuthService) {}
 
-  @Post('/login')
-  async login(@Body() body: Partial<UserDto>) {
-    console.log(body);
-    console.log('Password from body:', body.password);
-    const user = await this.authService.signIn(body.login, body.password);
+  @UseGuards(AdminGuard)
+  @Post("")
+  async createUser() {
+    return this.authService.signUp();
+  }
 
-    if (!user.hwid) {
-      await this.usersService.update(user.login, { hwid: body.hwid });
-    } else {
-      if (user.hwid !== body.hwid) {
-        throw new ForbiddenException('hwid does not match');
-      }
+  @UseGuards(AdminGuard)
+  @Delete("/:username")
+  async deleteUser(@Param("username") username: string) {
+    this.usersService.remove(username);
+  }
+
+  @Patch("/change-username")
+  async changeUsername(@Request() req, @Body() body: ChangeUserDto) {
+    const user = await this.usersService.findOne(body.newUsername);
+
+    if (user) {
+      throw new BadRequestException("Username in use");
     }
 
-    const file = createReadStream(join(process.cwd(), 'SoT-DLC-v3.dll'));
-    return new StreamableFile(file);
+    const newUser = await this.usersService.update(req.user.username, {
+      username: body.newUsername,
+    });
+
+    return this.authService.refreshToken(newUser);
   }
 
-  @Post('/create')
-  async createUser() {
-    const user = await this.authService.signUp();
+  @Patch("/change-password")
+  async changePassword(@Request() req, @Body() body: ChangeUserDto) {
+    await this.authService.validateUser(req.user.username, body.password);
 
-    return user;
+    this.usersService.updatePassword(req.user.username, body.newPassword);
   }
 
-  @Get('/test')
+  @Get("/test")
   time() {
     return new Date();
   }
 
-  @Get('/date')
+  @Get("/date")
   async getDate(@Body() body: Partial<UserDto>) {
-    const user = await this.usersService.findOne(body.login);
+    const user = await this.usersService.findOne(body.username);
 
     return user;
 
     if (!user.expire_date) {
-      throw new NotFoundException('user does not have subscription');
+      throw new NotFoundException("user does not have subscription");
     }
 
-    return user.expire_date < new Date() ? 'expired' : 'not expired';
+    return user.expire_date < new Date() ? "expired" : "not expired";
   }
 }
