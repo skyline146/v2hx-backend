@@ -1,9 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { Repository } from "typeorm";
-import { InjectRepository } from "@nestjs/typeorm";
-import { User } from "./user.entity";
-import { scrypt as _scrypt, randomBytes } from "crypto";
+import { Repository, Like } from "typeorm";
 import { promisify } from "util";
+import { scrypt as _scrypt, randomBytes } from "crypto";
+import { InjectRepository } from "@nestjs/typeorm";
+
+import { User } from "./user.entity";
+import { UserDto } from "./dtos/user.dto";
 
 const scrypt = promisify(_scrypt);
 
@@ -26,6 +28,14 @@ export class UsersService {
     return await this.userRepo.findOne({ where: { username } });
   }
 
+  async findAll(page: number, username?: string | undefined) {
+    return await this.userRepo.findAndCount({
+      take: 10,
+      skip: (page - 1) * 10,
+      where: { username: username ? Like(`%${username}%`) : undefined },
+    });
+  }
+
   async remove(username: string) {
     const user = await this.userRepo.findOneBy({ username });
 
@@ -36,14 +46,13 @@ export class UsersService {
     return this.userRepo.remove(user);
   }
 
-  async update(username: string, newData: Partial<User>) {
+  async update(username: string, newData: Partial<UserDto>) {
     const user = await this.userRepo.findOneBy({ username });
 
     if (!user) {
       return null;
     }
 
-    // this.userRepo.update(login, newData);
     return this.userRepo.save(this.userRepo.merge(user, newData));
   }
 

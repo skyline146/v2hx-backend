@@ -8,13 +8,13 @@ export class AdminGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
 
-    const { authorization }: any = request.headers;
+    const { accessToken }: any = request.cookies;
 
-    if (!authorization || authorization.trim() === "") {
+    if (!accessToken) {
       throw new UnauthorizedException("Please provide token");
     }
 
-    const data = await this.authService.validateToken(authorization.split(" ")[1]);
+    const data = await this.authService.validateToken(accessToken);
 
     return data.admin;
   }

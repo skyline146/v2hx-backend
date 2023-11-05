@@ -17,13 +17,13 @@ export class User {
   hdd: string;
 
   @Column({ default: "" })
-  mac_adress: string;
+  mac_address: string;
 
   @Column({ default: "" })
   last_hdd: string;
 
   @Column({ default: "" })
-  last_mac_adress: string;
+  last_mac_address: string;
 
   @Column({ default: 0 })
   expire_date: Date;

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { UsersService } from "../users/users.service";
 import { scrypt as _scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
@@ -16,16 +21,16 @@ export class AuthService {
 
   async signUp() {
     const password = randomBytes(6).toString("hex");
-    const login = randomBytes(6).toString("hex");
+    const username = randomBytes(6).toString("hex");
 
     const salt = randomBytes(8).toString("hex");
     const hash = (await scrypt(password, salt, 32)) as Buffer;
 
     const result = salt + "." + hash.toString("hex");
 
-    this.usersService.create(login, result);
+    this.usersService.create(username, result);
 
-    return { login, password };
+    return { username, password };
   }
 
   async signIn(user: User) {
@@ -42,7 +47,11 @@ export class AuthService {
   }
 
   async validateToken(token: string) {
-    return this.jwtService.verify(token);
+    try {
+      return this.jwtService.verify(token);
+    } catch (err) {
+      throw new UnauthorizedException("Invalid token, please login again");
+    }
   }
 
   async refreshToken(user: User) {

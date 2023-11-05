@@ -1,8 +1,7 @@
 import { NestFactory, Reflector } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import * as session from "express-session";
 import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import * as cookieParser from "cookie-parser";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 
 async function bootstrap() {
@@ -16,13 +15,8 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  app.use(
-    session({
-      secret: "asf123fhasnf1j3",
-      resave: false,
-      saveUninitialized: false,
-    })
-  );
+  app.use(cookieParser());
+
   await app.listen(3000);
 }
 bootstrap();

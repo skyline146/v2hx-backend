@@ -17,6 +17,6 @@ export class InfoController {
   @UseGuards(AdminGuard)
   @Patch("")
   changeInfo(@Body() body: Partial<InfoDto>) {
-    this.infoService.update(body);
+    return this.infoService.update(body);
   }
 }

@@ -5,21 +5,18 @@ import {
   Get,
   Post,
   Res,
-  Session,
   StreamableFile,
   Request,
   UseGuards,
-  ClassSerializerInterceptor,
-  UseInterceptors,
 } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
+import type { Response } from "express";
+
 import { AuthService } from "./auth.service";
 import { UsersService } from "src/users/users.service";
-import type { Response } from "express";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { LoginUserDto } from "./dtos/login-user.dto";
-import { Serialize } from "src/interceptors/serialize.interceptor";
 import { UserDto } from "src/users/dtos/user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
@@ -31,9 +28,10 @@ export class AuthController {
     private readonly usersService: UsersService
   ) {}
 
+  //login in loader
   @Post("/login")
   async login(@Body() body: LoginUserDto, @Res({ passthrough: true }) res: Response) {
-    const { hdd, mac_adress, username, password } = body;
+    const { hdd, mac_address, username, password } = body;
 
     const user = await this.authService.validateUser(username, password);
 
@@ -41,51 +39,70 @@ export class AuthController {
     if (!user.hdd) {
       await this.usersService.update(user.username, {
         hdd,
-        mac_adress,
+        mac_address,
         last_hdd: hdd,
-        last_mac_adress: mac_adress,
-        last_entry_date: new Date(),
+        last_mac_address: mac_address,
       });
     } //next logins
     else {
+      //check if ban
+      if (user.ban) {
+        throw new UnauthorizedException("You have no access, please create ticket in discord");
+      }
       //check hwids validity
-      if (hdd !== user.hdd || mac_adress !== user.mac_adress) {
+      if (hdd !== user.hdd || mac_address !== user.mac_address) {
         this.usersService.update(user.username, {
           last_hdd: hdd,
-          last_mac_adress: mac_adress,
+          last_mac_address: mac_address,
           last_entry_date: new Date(),
+          ban: true,
+          warn: user.warn + 1,
         });
-        throw new UnauthorizedException("hwid does not match");
+
+        throw new UnauthorizedException("Hwid does not match");
       }
-
-      this.usersService.update(user.username, {
-        last_entry_date: new Date(),
-      });
-
-      const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));
-      res.set({ "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"' });
-
-      return new StreamableFile(file);
     }
+
+    //validation passed, return dll
+    this.usersService.update(user.username, {
+      last_entry_date: new Date(),
+    });
+
+    const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));
+    res.set({ "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"' });
+
+    return new StreamableFile(file);
   }
 
   @UseGuards(LocalAuthGuard)
   @Post("/login-web")
-  async signIn(@Request() req) {
-    // console.log(req.body);
+  async signIn(@Request() req, @Res({ passthrough: true }) res: Response) {
+    const user = await this.authService.signIn(req.user);
 
-    // const user = await this.authService.signIn(req.user);
+    res.cookie("accessToken", user.accessToken, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 60 * 60 * 1000),
+    });
+    res.cookie("refreshToken", user.refreshToken, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
-    // res.cookie("accessToken", user.accessToken, { httpOnly: true });
-    // res.cookie("refreshToken", user.refreshToken, { httpOnly: true });
-
-    return new UserDto(await this.authService.signIn(req.user));
+    return new UserDto(user);
   }
 
   @UseGuards(RefreshJwtGuard)
   @Get("/refresh")
   async refreshToken(@Request() req) {
     return this.authService.refreshToken(req.user);
+  }
+
+  @Get("/logout-web")
+  logOut(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+
+    return true;
   }
 
   @UseGuards(JwtAuthGuard)

@@ -11,5 +11,5 @@ export class LoginUserDto {
   hdd: string;
 
   @IsString()
-  mac_adress: string;
+  mac_address: string;
 }

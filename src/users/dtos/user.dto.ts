@@ -1,4 +1,4 @@
-import { IsString, IsDate, IsNumber, IsBoolean } from "class-validator";
+import { IsString, IsNumber, IsBoolean } from "class-validator";
 import { Exclude } from "class-transformer";
 
 export class UserDto {
@@ -19,11 +19,11 @@ export class UserDto {
 
   @IsString()
   @Exclude()
-  mac_adress: string;
+  mac_address: string;
 
   @IsString()
   @Exclude()
-  last_mac_adress: string;
+  last_mac_address: string;
 
   @IsNumber()
   @Exclude()
@@ -34,6 +34,16 @@ export class UserDto {
   ban: boolean;
 
   expire_date: Date;
+
+  last_entry_date: Date;
+
+  @IsString()
+  @Exclude()
+  accessToken: string;
+
+  @IsString()
+  @Exclude()
+  refreshToken: string;
 
   constructor(partial: Partial<UserDto>) {
     Object.assign(this, partial);

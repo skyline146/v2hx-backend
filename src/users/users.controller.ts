@@ -6,18 +6,22 @@ import {
   NotFoundException,
   UseGuards,
   Delete,
-  Query,
   BadRequestException,
   Request,
   Param,
   Patch,
+  Res,
+  Query,
 } from "@nestjs/common";
+import type { Response } from "express";
+
 import { UsersService } from "./users.service";
 import { UserDto } from "./dtos/user.dto";
 import { AuthService } from "../auth/auth.service";
 import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
+import { GetUsersDto } from "./dtos/get-users.dto";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -31,13 +35,40 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @Get("")
+  async getUsers(@Query() query: Partial<GetUsersDto>) {
+    const { page, username } = query;
+    const pageN: number = page ? +page : 1;
+
+    const [users, total] = await this.usersService.findAll(pageN, username);
+
+    return { users, total };
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("/:username")
+  async updateUser(@Param("username") username: string, @Body() body: Partial<UserDto>) {
+    return this.usersService.update(username, body);
+  }
+
+  @UseGuards(AdminGuard)
+  @Get("/:username")
+  async getUser(@Param("username") username: string) {
+    return this.usersService.findOne(username);
+  }
+
+  @UseGuards(AdminGuard)
   @Delete("/:username")
   async deleteUser(@Param("username") username: string) {
     this.usersService.remove(username);
   }
 
-  @Patch("/change-username")
-  async changeUsername(@Request() req, @Body() body: ChangeUserDto) {
+  @Post("/change-username")
+  async changeUsername(
+    @Request() req,
+    @Body() body: ChangeUserDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
     const user = await this.usersService.findOne(body.newUsername);
 
     if (user) {
@@ -48,14 +79,23 @@ export class UsersController {
       username: body.newUsername,
     });
 
-    return this.authService.refreshToken(newUser);
+    const { accessToken } = await this.authService.refreshToken(newUser);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    return "Username changed!";
   }
 
-  @Patch("/change-password")
+  @Post("/change-password")
   async changePassword(@Request() req, @Body() body: ChangeUserDto) {
     await this.authService.validateUser(req.user.username, body.password);
 
     this.usersService.updatePassword(req.user.username, body.newPassword);
+
+    return "Password changed!";
   }
 
   @Get("/test")

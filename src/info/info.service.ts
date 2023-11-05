@@ -15,6 +15,6 @@ export class InfoService {
   async update(data: Partial<InfoDto>) {
     const info = await this.infoRepo.findOne({ where: { cheat_version: undefined } });
 
-    await this.infoRepo.save(this.infoRepo.merge(info, data));
+    return await this.infoRepo.save(this.infoRepo.merge(info, data));
   }
 }
