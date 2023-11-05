@@ -81,10 +81,14 @@ export class AuthController {
 
     res.cookie("accessToken", user.accessToken, {
       httpOnly: true,
+      secure: false,
+      sameSite: "strict",
       expires: new Date(Date.now() + 60 * 60 * 1000),
     });
     res.cookie("refreshToken", user.refreshToken, {
       httpOnly: true,
+      secure: false,
+      sameSite: "strict",
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
