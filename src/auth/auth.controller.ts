@@ -47,6 +47,10 @@ export class AuthController {
     else {
       //check if ban
       if (user.ban) {
+        this.usersService.update(user.username, {
+          last_entry_date: new Date(),
+        });
+
         throw new UnauthorizedException("You have no access, please create ticket in discord");
       }
       //check hwids validity

@@ -14,6 +14,7 @@ import {
   Query,
 } from "@nestjs/common";
 import type { Response } from "express";
+import { randomBytes } from "crypto";
 
 import { UsersService } from "./users.service";
 import { UserDto } from "./dtos/user.dto";
@@ -22,6 +23,7 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
 import { GetUsersDto } from "./dtos/get-users.dto";
+import { Serialize } from "src/interceptors/serialize.interceptor";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -35,8 +37,9 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  // @Serialize(GetUsersDto)
   @Get("")
-  async getUsers(@Query() query: Partial<GetUsersDto>) {
+  async getUsers(@Query() query: Partial<{ page: string; username: string }>) {
     const { page, username } = query;
     const pageN: number = page ? +page : 1;
 
@@ -55,6 +58,16 @@ export class UsersController {
   @Get("/:username")
   async getUser(@Param("username") username: string) {
     return this.usersService.findOne(username);
+  }
+
+  @UseGuards(AdminGuard)
+  @Get("/:username/reset-password")
+  async resetPassword(@Param("username") username: string) {
+    const password = randomBytes(6).toString("hex");
+
+    this.usersService.updatePassword(username, password);
+
+    return { password };
   }
 
   @UseGuards(AdminGuard)
@@ -83,6 +96,8 @@ export class UsersController {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
+      secure: true,
+      sameSite: "none",
       expires: new Date(Date.now() + 60 * 60 * 1000),
     });
 
