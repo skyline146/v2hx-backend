@@ -33,7 +33,7 @@ export class UserDto {
   @Exclude()
   ban: boolean;
 
-  expire_date: Date;
+  expire_date: string;
 
   last_entry_date: Date;
 

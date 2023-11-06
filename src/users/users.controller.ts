@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Post,
-  NotFoundException,
   UseGuards,
   Delete,
   BadRequestException,
@@ -22,8 +21,7 @@ import { AuthService } from "../auth/auth.service";
 import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
-import { GetUsersDto } from "./dtos/get-users.dto";
-import { Serialize } from "src/interceptors/serialize.interceptor";
+import { Public } from "src/decorators/public.decorator";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -113,21 +111,11 @@ export class UsersController {
     return "Password changed!";
   }
 
-  @Get("/test")
-  time() {
-    return new Date();
-  }
+  @Public()
+  @Get("/:username/subscription")
+  async getDate(@Param("username") username: string) {
+    const user = await this.usersService.findOne(username);
 
-  @Get("/date")
-  async getDate(@Body() body: Partial<UserDto>) {
-    const user = await this.usersService.findOne(body.username);
-
-    return user;
-
-    if (!user.expire_date) {
-      throw new NotFoundException("user does not have subscription");
-    }
-
-    return user.expire_date < new Date() ? "expired" : "not expired";
+    return { expire_date: user.expire_date };
   }
 }

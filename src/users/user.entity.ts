@@ -25,8 +25,8 @@ export class User {
   @Column({ default: "" })
   last_mac_address: string;
 
-  @Column({ default: 0 })
-  expire_date: Date;
+  @Column({ default: "" })
+  expire_date: string;
 
   @Column({ default: 0 })
   last_entry_date: Date;
