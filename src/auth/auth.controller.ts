@@ -35,6 +35,15 @@ export class AuthController {
 
     const user = await this.authService.validateUser(username, password);
 
+    //check on subscription
+    const expire_date = new Date(user.expire_date);
+    if (
+      user.expire_date !== "Lifetime" &&
+      (expire_date.toString() === "Invalid Date" || expire_date.getTime() < Date.now())
+    ) {
+      throw new UnauthorizedException("You dont have active subscription");
+    }
+
     //first login
     if (!user.hdd) {
       await this.usersService.update(user.username, {
