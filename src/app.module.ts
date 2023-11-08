@@ -26,19 +26,8 @@ import { Info } from "./info/info.entity";
     }),
     ThrottlerModule.forRoot([
       {
-        name: "short",
-        ttl: 1000,
-        limit: 3,
-      },
-      {
-        name: "medium",
         ttl: 10000,
         limit: 10,
-      },
-      {
-        name: "long",
-        ttl: 60000,
-        limit: 50,
       },
     ]),
     UsersModule,
