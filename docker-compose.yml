@@ -3,10 +3,14 @@ version: "3.5"
 services:
   db:
     image: postgres
+    container_name: v2hx.postgres
     restart: always
+    env_file:
+      - .env
     environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    container_name: postgres
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     ports:
@@ -16,9 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nest-backend
-    environment:
-      - PORT=${PORT}
+    container_name: v2hx.backend
     ports:
       - "3000:3000"
     depends_on:
@@ -29,10 +31,12 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     restart: always
-    container_name: nest-pgadmin4
+    container_name: pgadmin4
+    env_file:
+      - .env
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=pgadmin4
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
