@@ -4,7 +4,7 @@ import { promisify } from "util";
 import { scrypt as _scrypt, randomBytes } from "crypto";
 import { InjectRepository } from "@nestjs/typeorm";
 
-import { User } from "./user.entity";
+import { User } from "../entities/user.entity";
 import { UserDto } from "./dtos/user.dto";
 
 const scrypt = promisify(_scrypt);

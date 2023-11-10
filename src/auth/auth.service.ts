@@ -8,7 +8,7 @@ import { UsersService } from "../users/users.service";
 import { scrypt as _scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "../users/user.entity";
+import { User } from "../entities/user.entity";
 
 const scrypt = promisify(_scrypt);
 

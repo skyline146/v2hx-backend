@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
 import { InfoService } from "./info.service";
 import { InfoDto } from "./dtos/info.dto";
 import { AdminGuard } from "src/guards/admin.guard";
@@ -17,6 +17,17 @@ export class InfoController {
   @UseGuards(AdminGuard)
   @Patch("")
   changeInfo(@Body() body: Partial<InfoDto>) {
+    return this.infoService.update(body);
+  }
+
+  @Get("/offsets")
+  getOffsets() {
+    return true;
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("/offsets")
+  changeOffsets(@Body() body: Partial<InfoDto>) {
     return this.infoService.update(body);
   }
 }

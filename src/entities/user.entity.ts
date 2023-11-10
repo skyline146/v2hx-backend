@@ -28,8 +28,8 @@ export class User {
   @Column({ default: "" })
   expire_date: string;
 
-  @Column({ default: 0 })
-  last_entry_date: Date;
+  @Column({ default: "" })
+  last_entry_date: string;
 
   @Column({ default: 0 })
   warn: number;

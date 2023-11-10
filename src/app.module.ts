@@ -2,27 +2,27 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
-import { User } from "./users/user.entity";
+// import { User } from "./entities/user.entity";
 import { AuthModule } from "./auth/auth.module";
 import { InfoModule } from "./info/info.module";
-import { Info } from "./info/info.entity";
+// import { Info } from "./entities/info.entity";
+import typeorm from "./config/typeorm";
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: "sqlite",
-      database: "db.sqlite",
-      entities: [User, Info],
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      useFactory: async (configService: ConfigService) => configService.get("typeorm"),
+      inject: [ConfigService],
     }),
     ConfigModule.forRoot({
       envFilePath: ".env",
       isGlobal: true,
+      load: [typeorm],
     }),
     ThrottlerModule.forRoot([
       {
@@ -31,10 +31,15 @@ import { Info } from "./info/info.entity";
       },
     ]),
     UsersModule,
-    AuthModule,
     InfoModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
+
+// type: "sqlite",
+//       database: "db.sqlite",
+//       entities: [User, Info],
+//       synchronize: true,

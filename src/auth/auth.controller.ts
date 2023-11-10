@@ -14,9 +14,11 @@ import { join } from "path";
 import type { Response } from "express";
 
 import { AuthService } from "./auth.service";
+// import { UsersService } from "../users/users.service";
 import { UsersService } from "src/users/users.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { LoginUserDto } from "./dtos/login-user.dto";
+// import { UserDto } from "../users/dtos/user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
@@ -57,7 +59,7 @@ export class AuthController {
       //check if ban
       if (user.ban) {
         this.usersService.update(user.username, {
-          last_entry_date: new Date(),
+          last_entry_date: new Date().toISOString(),
         });
 
         throw new UnauthorizedException("You have no access, please create ticket in discord");
@@ -67,7 +69,7 @@ export class AuthController {
         this.usersService.update(user.username, {
           last_hdd: hdd,
           last_mac_address: mac_address,
-          last_entry_date: new Date(),
+          last_entry_date: new Date().toISOString(),
           ban: true,
           warn: user.warn + 1,
         });
@@ -78,7 +80,7 @@ export class AuthController {
 
     //validation passed, return dll
     this.usersService.update(user.username, {
-      last_entry_date: new Date(),
+      last_entry_date: new Date().toISOString(),
     });
 
     const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));

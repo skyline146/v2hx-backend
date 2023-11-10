@@ -35,7 +35,7 @@ export class UserDto {
 
   expire_date: string;
 
-  last_entry_date: Date;
+  last_entry_date: string;
 
   @IsString()
   @Exclude()
