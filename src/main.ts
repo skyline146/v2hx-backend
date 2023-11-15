@@ -11,6 +11,8 @@ async function bootstrap() {
   const allowed_origins = process.env.ALLOWED_ORIGINS;
   app.enableCors({ origin: allowed_origins.split(","), credentials: true });
 
+  app.setGlobalPrefix("/api");
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
