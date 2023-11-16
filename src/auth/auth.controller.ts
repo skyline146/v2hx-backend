@@ -41,7 +41,7 @@ export class AuthController {
     const expire_date = new Date(user.expire_date);
     if (
       user.expire_date !== "Lifetime" &&
-      (expire_date.toString() === "Invalid Date" || expire_date.getTime() < Date.now())
+      (!user.expire_date || expire_date.getTime() < Date.now())
     ) {
       throw new UnauthorizedException("You dont have active subscription");
     }

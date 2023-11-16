@@ -11,6 +11,7 @@ import {
   Patch,
   Res,
   Query,
+  NotFoundException,
 } from "@nestjs/common";
 import type { Response } from "express";
 import { randomBytes } from "crypto";
@@ -58,7 +59,7 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Get("/:username")
   async getUser(@Param("username") username: string) {
-    return this.usersService.findOne(username);
+    return this.usersService.findOne({ username });
   }
 
   @UseGuards(AdminGuard)
@@ -83,7 +84,7 @@ export class UsersController {
     @Body() body: ChangeUserDto,
     @Res({ passthrough: true }) res: Response
   ) {
-    const user = await this.usersService.findOne(body.newUsername);
+    const user = await this.usersService.findOne({ username: body.newUsername });
 
     if (user) {
       throw new BadRequestException("Username in use");
@@ -117,7 +118,11 @@ export class UsersController {
   @Public()
   @Get("/:username/subscription")
   async getDate(@Param("username") username: string) {
-    const user = await this.usersService.findOne(username);
+    const user = await this.usersService.findOne({ username });
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
     return { expire_date: user.expire_date };
   }

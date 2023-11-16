@@ -9,6 +9,12 @@ import { UserDto } from "./dtos/user.dto";
 
 const scrypt = promisify(_scrypt);
 
+type FindOneOptions = {
+  username?: string;
+  hdd?: string;
+  mac_address?: string;
+};
+
 @Injectable()
 export class UsersService {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
@@ -24,8 +30,8 @@ export class UsersService {
     return { username, password };
   }
 
-  async findOne(username: string) {
-    return await this.userRepo.findOne({ where: { username } });
+  async findOne(options: FindOneOptions) {
+    return await this.userRepo.findOne({ where: options });
   }
 
   async findAll(page: number, username?: string | undefined) {
