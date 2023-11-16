@@ -127,6 +127,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get("/is-logged")
   async isLogged(@Request() req) {
-    return new UserDto(await this.usersService.findOne(req.user.username));
+    return new UserDto(await this.usersService.findOne({ username: req.user.username }));
   }
 }
