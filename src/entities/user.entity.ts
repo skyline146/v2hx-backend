@@ -10,6 +10,9 @@ export class User {
   @Length(3, 50)
   username: string;
 
+  // @Column("text", { array: true, default: [] })
+  // usernames_history: string[];
+
   @Column()
   password: string;
 
