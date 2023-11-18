@@ -83,7 +83,7 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
-  @Get("/:username/reset-password")
+  @Post("/:username/reset-password")
   async resetPassword(@Param("username") username: string) {
     const password = randomBytes(6).toString("hex");
 
@@ -98,7 +98,7 @@ export class UsersController {
     this.usersService.remove(username);
   }
 
-  @Post("/change-username")
+  @Patch("/change-username")
   async changeUsername(
     @Request() req,
     @Body() body: ChangeUserDto,
@@ -126,7 +126,7 @@ export class UsersController {
     return "Username changed!";
   }
 
-  @Post("/change-password")
+  @Patch("/change-password")
   async changePassword(@Request() req, @Body() body: ChangeUserDto) {
     await this.authService.validateUser(req.user.username, body.password);
 
