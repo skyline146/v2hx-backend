@@ -15,6 +15,7 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import { randomBytes } from "crypto";
+import { Not, And } from "typeorm";
 
 import { UsersService } from "./users.service";
 import { UserDto } from "./dtos/user.dto";
@@ -45,9 +46,28 @@ export class UsersController {
     const { page, username } = query;
     const pageN: number = page ? +page : 1;
 
-    const [users, total] = await this.usersService.findAll(pageN, username);
+    const [users, total] = await this.usersService.findLikePagination(pageN, username);
 
     return { users, total };
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch("/add-free-day")
+  async addFreeDay() {
+    const users = (
+      await this.usersService.findAll({ expire_date: And(Not(""), Not("Lifetime")) })
+    ).filter((user) => new Date(user.expire_date).getTime() > Date.now());
+
+    await this.usersService.updateMany(
+      users.map((user) => ({
+        ...user,
+        expire_date: new Date(
+          new Date(user.expire_date).getTime() + 24 * 60 * 60 * 1000
+        ).toISOString(),
+      }))
+    );
+
+    return true;
   }
 
   @UseGuards(AdminGuard)

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Repository, Like } from "typeorm";
+import { Repository, Like, FindOperator } from "typeorm";
 import { promisify } from "util";
 import { scrypt as _scrypt, randomBytes } from "crypto";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -13,6 +13,10 @@ type FindOneOptions = {
   username?: string;
   hdd?: string;
   mac_address?: string;
+};
+
+type FindAllOptions = {
+  expire_date?: FindOperator<string>;
 };
 
 @Injectable()
@@ -34,7 +38,11 @@ export class UsersService {
     return await this.userRepo.findOne({ where: options });
   }
 
-  async findAll(page: number, username?: string | undefined) {
+  async findAll(options?: FindAllOptions) {
+    return await this.userRepo.find({ where: options });
+  }
+
+  async findLikePagination(page: number, username?: string | undefined) {
     return await this.userRepo.findAndCount({
       take: 10,
       skip: (page - 1) * 10,
@@ -50,6 +58,10 @@ export class UsersService {
     }
 
     return this.userRepo.remove(user);
+  }
+
+  async updateMany(data: User[]) {
+    await this.userRepo.save(data);
   }
 
   async update(username: string, newData: Partial<UserDto>) {
