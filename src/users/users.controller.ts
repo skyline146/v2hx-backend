@@ -27,6 +27,7 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
 // import { Public } from "../decorators/public.decorator";
 import { Public } from "src/decorators/public.decorator";
+import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -68,6 +69,18 @@ export class UsersController {
     );
 
     return true;
+  }
+
+  @Public()
+  @Get("/get-by-hwids")
+  async getUserByHwids(@Body() body: GetOffsetsDto) {
+    const { hdd, mac_address } = body;
+
+    const user = await this.usersService.findOne({ hdd, mac_address });
+
+    const { expire_date, username } = user;
+
+    return { expire_date, username };
   }
 
   @UseGuards(AdminGuard)
