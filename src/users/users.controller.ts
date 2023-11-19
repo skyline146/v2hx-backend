@@ -98,7 +98,7 @@ export class UsersController {
     this.usersService.remove(username);
   }
 
-  @Patch("/change-username")
+  @Post("/change-username")
   async changeUsername(
     @Request() req,
     @Body() body: ChangeUserDto,
@@ -126,7 +126,7 @@ export class UsersController {
     return "Username changed!";
   }
 
-  @Patch("/change-password")
+  @Post("/change-password")
   async changePassword(@Request() req, @Body() body: ChangeUserDto) {
     await this.authService.validateUser(req.user.username, body.password);
 
