@@ -132,7 +132,7 @@ export class UsersController {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: "strict",
       expires: new Date(Date.now() + 60 * 60 * 1000),
     });
 
