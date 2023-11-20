@@ -16,7 +16,7 @@ services:
     ports:
       - "5432:5432"
 
-  app:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -26,7 +26,19 @@ services:
     depends_on:
       - db
     volumes:
-      - ./src:/app/src
+      - ./src:/backend/src
+
+  frontend:
+    build:
+      context: ../v2hx-frontend/
+      dockerfile: Dockerfile
+    container_name: v2hx.frontend
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
+    volumes:
+      - ../v2hx-frontend/src:/frontend/src
 
   # pgadmin:
   #   image: dpage/pgadmin4
