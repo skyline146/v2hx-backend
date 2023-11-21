@@ -29,7 +29,7 @@ export class UsersService {
       password,
     });
 
-    this.userRepo.save(user);
+    await this.userRepo.save(user);
 
     return { username, password };
   }
@@ -57,7 +57,7 @@ export class UsersService {
       return null;
     }
 
-    return this.userRepo.remove(user);
+    return await this.userRepo.remove(user);
   }
 
   async updateMany(data: User[]) {
@@ -71,7 +71,7 @@ export class UsersService {
       return null;
     }
 
-    return this.userRepo.save(this.userRepo.merge(user, newData));
+    return await this.userRepo.save(this.userRepo.merge(user, newData));
   }
 
   async updatePassword(username: string, newPassword: string) {

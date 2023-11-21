@@ -37,7 +37,7 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Post("")
   async createUser() {
-    return this.authService.signUp();
+    return await this.authService.signUp();
   }
 
   @UseGuards(AdminGuard)
@@ -90,7 +90,7 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Patch("/:username")
   async updateUser(@Param("username") username: string, @Body() body: Partial<UserDto>) {
-    return this.usersService.update(username, body);
+    return await this.usersService.update(username, body);
   }
 
   @UseGuards(AdminGuard)
@@ -112,7 +112,7 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Delete("/:username")
   async deleteUser(@Param("username") username: string) {
-    this.usersService.remove(username);
+    return await this.usersService.remove(username);
   }
 
   @Post("/change-username")
