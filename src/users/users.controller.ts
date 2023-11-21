@@ -78,6 +78,10 @@ export class UsersController {
 
     const user = await this.usersService.findOne({ hdd, mac_address });
 
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
     const { expire_date, username } = user;
 
     return { expire_date, username };
