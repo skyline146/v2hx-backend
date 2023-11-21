@@ -35,8 +35,6 @@ services:
     container_name: v2hx.frontend
     ports:
       - "4173:4173"
-    depends_on:
-      - backend
     volumes:
       - ../v2hx-frontend/src:/frontend/src
 
