@@ -39,9 +39,9 @@ export class InfoController {
 
   @Get("/offsets")
   async getOffsets(@Body() body: GetOffsetsDto, @Res() res: Response) {
-    const { hwid1, hwid2 } = body;
+    const { hwid1: hdd, hwid2: mac_address } = body;
 
-    const user = await this.usersService.findOne({ hdd: hwid1, mac_address: hwid2 });
+    const user = await this.usersService.findOne({ hdd, mac_address });
 
     if (!user) {
       throw new NotFoundException("User not found");
