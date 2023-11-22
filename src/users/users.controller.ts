@@ -74,9 +74,9 @@ export class UsersController {
   @Public()
   @Get("/get-by-hwids")
   async getUserByHwids(@Body() body: GetOffsetsDto) {
-    const { hdd, mac_address } = body;
+    const { hwid1, hwid2 } = body;
 
-    const user = await this.usersService.findOne({ hdd, mac_address });
+    const user = await this.usersService.findOne({ hdd: hwid1, mac_address: hwid2 });
 
     if (!user) {
       throw new NotFoundException("User not found");

@@ -2,8 +2,8 @@ import { IsString } from "class-validator";
 
 export class GetOffsetsDto {
   @IsString()
-  hdd: string;
+  hwid1: string;
 
   @IsString()
-  mac_address: string;
+  hwid2: string;
 }

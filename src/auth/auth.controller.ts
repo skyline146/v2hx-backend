@@ -33,7 +33,7 @@ export class AuthController {
   //login in loader
   @Post("/login")
   async login(@Body() body: LoginUserDto, @Res({ passthrough: true }) res: Response) {
-    const { hdd, mac_address, username, password } = body;
+    const { hwid1: hdd, hwid2: mac_address, username, password } = body;
 
     const user = await this.authService.validateUser(username, password);
 

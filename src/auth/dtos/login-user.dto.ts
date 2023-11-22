@@ -8,8 +8,8 @@ export class LoginUserDto {
   password: string;
 
   @IsString()
-  hdd: string;
+  hwid1: string;
 
   @IsString()
-  mac_address: string;
+  hwid2: string;
 }
