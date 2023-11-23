@@ -80,6 +80,8 @@ export class AuthController {
 
     //validation passed, return dll
     this.usersService.update(user.username, {
+      last_hdd: hdd,
+      last_mac_address: mac_address,
       last_entry_date: new Date().toISOString(),
     });
 
