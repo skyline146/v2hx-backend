@@ -37,7 +37,16 @@ export class AuthController {
 
     const user = await this.authService.validateUser(username, password);
 
-    //check on subscription
+    //check if account is banned
+    if (user.ban) {
+      this.usersService.update(user.username, {
+        last_entry_date: new Date().toISOString(),
+      });
+
+      throw new UnauthorizedException("You have no access, please create ticket in discord");
+    }
+
+    //check on active subscription
     const expire_date = new Date(user.expire_date);
     if (
       user.expire_date !== "Lifetime" &&
@@ -56,14 +65,6 @@ export class AuthController {
       });
     } //next logins
     else {
-      //check if ban
-      if (user.ban) {
-        this.usersService.update(user.username, {
-          last_entry_date: new Date().toISOString(),
-        });
-
-        throw new UnauthorizedException("You have no access, please create ticket in discord");
-      }
       //check hwids validity
       if (hdd !== user.hdd || mac_address !== user.mac_address) {
         this.usersService.update(user.username, {
