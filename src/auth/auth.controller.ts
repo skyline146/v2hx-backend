@@ -22,6 +22,7 @@ import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
+import { checkActiveSubscription } from "src/utils";
 
 @Controller("auth")
 export class AuthController {
@@ -47,13 +48,7 @@ export class AuthController {
     }
 
     //check on active subscription
-    const expire_date = new Date(user.expire_date);
-    if (
-      user.expire_date !== "Lifetime" &&
-      (!user.expire_date || expire_date.getTime() < Date.now())
-    ) {
-      throw new UnauthorizedException("You dont have active subscription");
-    }
+    checkActiveSubscription(user.expire_date);
 
     //first login
     if (!user.hdd) {

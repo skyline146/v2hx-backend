@@ -28,11 +28,16 @@ import { ChangeUserDto } from "./dtos/change-user.dto";
 // import { Public } from "../decorators/public.decorator";
 import { Public } from "src/decorators/public.decorator";
 import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
+import { InfoService } from "src/info/info.service";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
 export class UsersController {
-  constructor(private readonly usersService: UsersService, private authService: AuthService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private authService: AuthService,
+    private infoService: InfoService
+  ) {}
 
   @UseGuards(AdminGuard)
   @Post("")
@@ -77,6 +82,7 @@ export class UsersController {
     const { hwid1: hdd, hwid2: mac_address } = body;
 
     const user = await this.usersService.findOne({ hdd, mac_address });
+    const { cheat_version } = await this.infoService.get();
 
     if (!user) {
       throw new NotFoundException("User not found");
@@ -84,7 +90,7 @@ export class UsersController {
 
     const { expire_date, username } = user;
 
-    return { expire_date, username };
+    return { expire_date, username, cheat_version };
   }
 
   @UseGuards(AdminGuard)

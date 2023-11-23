@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  NotFoundException,
-  Patch,
-  Post,
-  Res,
-  StreamableFile,
-  UnauthorizedException,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Patch, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { createReadStream } from "fs";
 import { join } from "path";
@@ -19,6 +8,7 @@ import { InfoDto } from "./dtos/info.dto";
 import { AdminGuard } from "src/guards/admin.guard";
 import { GetOffsetsDto } from "./dtos/getOffsets.dto";
 import { UsersService } from "src/users/users.service";
+import { checkActiveSubscription } from "src/utils";
 
 @Controller("info")
 export class InfoController {
@@ -47,23 +37,11 @@ export class InfoController {
       throw new NotFoundException("User not found");
     }
 
-    const expire_date = new Date(user.expire_date);
-    if (
-      user.expire_date !== "Lifetime" &&
-      (!user.expire_date || expire_date.getTime() < Date.now())
-    ) {
-      throw new UnauthorizedException("You dont have active subscription");
-    }
+    checkActiveSubscription(user.expire_date);
 
     const file = createReadStream(join(process.cwd(), "offsets.json"));
     res.set({ "Content-Type": "application/json" });
 
     file.pipe(res);
-  }
-
-  @UseGuards(AdminGuard)
-  @Patch("/offsets")
-  changeOffsets(@Body() body: Partial<InfoDto>) {
-    return this.infoService.update(body);
   }
 }
