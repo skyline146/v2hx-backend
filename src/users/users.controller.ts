@@ -15,7 +15,7 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 import { randomBytes } from "crypto";
-import { Not, And } from "typeorm";
+import { Not, And, Like } from "typeorm";
 
 import { UsersService } from "./users.service";
 import { UserDto } from "./dtos/user.dto";
@@ -29,6 +29,7 @@ import { ChangeUserDto } from "./dtos/change-user.dto";
 import { Public } from "src/decorators/public.decorator";
 import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
 import { InfoService } from "src/info/info.service";
+import { getHashedPassword } from "src/utils";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -46,13 +47,16 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
-  // @Serialize(GetUsersDto)
   @Get("")
-  async getUsers(@Query() query: Partial<{ page: string; username: string }>) {
-    const { page, username } = query;
+  async getUsers(@Query() query: Partial<{ page: string; search_value: string | undefined }>) {
+    const { page, search_value } = query;
     const pageN: number = page ? +page : 1;
 
-    const [users, total] = await this.usersService.findLikePagination(pageN, username);
+    const searchQuery = search_value
+      ? [{ username: Like(`%${search_value}%`) }, { discord_username: Like(`%${search_value}%`) }]
+      : { username: undefined };
+
+    const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
 
     return { users, total };
   }
@@ -108,11 +112,13 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Post("/:username/reset-password")
   async resetPassword(@Param("username") username: string) {
-    const password = randomBytes(6).toString("hex");
+    const newPassword = randomBytes(6).toString("hex");
 
-    this.usersService.updatePassword(username, password);
+    const newHashedPassword = await getHashedPassword(newPassword);
 
-    return { password };
+    await this.usersService.update(username, { password: newHashedPassword });
+
+    return { password: newPassword };
   }
 
   @UseGuards(AdminGuard)
@@ -153,7 +159,9 @@ export class UsersController {
   async changePassword(@Request() req, @Body() body: ChangeUserDto) {
     await this.authService.validateUser(req.user.username, body.password);
 
-    this.usersService.updatePassword(req.user.username, body.newPassword);
+    const newHashedPassword = await getHashedPassword(body.newPassword);
+
+    await this.usersService.update(req.user.username, { password: newHashedPassword });
 
     return "Password changed!";
   }

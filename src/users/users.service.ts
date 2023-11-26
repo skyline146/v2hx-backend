@@ -1,13 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { Repository, Like, FindOperator } from "typeorm";
-import { promisify } from "util";
-import { scrypt as _scrypt, randomBytes } from "crypto";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { User } from "../entities/user.entity";
 import { UserDto } from "./dtos/user.dto";
-
-const scrypt = promisify(_scrypt);
 
 type FindOneOptions = {
   username?: string;
@@ -17,6 +13,8 @@ type FindOneOptions = {
 
 type FindAllOptions = {
   expire_date?: FindOperator<string>;
+  username?: FindOperator<string>;
+  discord_username?: FindOperator<string>;
 };
 
 @Injectable()
@@ -30,8 +28,6 @@ export class UsersService {
     });
 
     await this.userRepo.save(user);
-
-    return { username, password };
   }
 
   async findOne(options: FindOneOptions) {
@@ -42,11 +38,14 @@ export class UsersService {
     return await this.userRepo.find({ where: options });
   }
 
-  async findLikePagination(page: number, username?: string | undefined) {
+  async findLikePagination(page: number, options: FindAllOptions | FindAllOptions[]) {
     return await this.userRepo.findAndCount({
       take: 10,
       skip: (page - 1) * 10,
-      where: { username: username ? Like(`%${username}%`) : undefined },
+      where: options,
+      order: {
+        username: "ASC",
+      },
     });
   }
 
@@ -72,16 +71,5 @@ export class UsersService {
     }
 
     return await this.userRepo.save(this.userRepo.merge(user, newData));
-  }
-
-  async updatePassword(username: string, newPassword: string) {
-    const user = await this.userRepo.findOneBy({ username });
-
-    const salt = randomBytes(8).toString("hex");
-    const hash = (await scrypt(newPassword, salt, 32)) as Buffer;
-
-    const result = salt + "." + hash.toString("hex");
-
-    return this.userRepo.save(this.userRepo.merge(user, { password: result }));
   }
 }

@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { UsersService } from "../users/users.service";
+import { JwtService } from "@nestjs/jwt";
 import { scrypt as _scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
-import { JwtService } from "@nestjs/jwt";
+
+import { UsersService } from "../users/users.service";
 import { User } from "../entities/user.entity";
+import { getHashedPassword } from "src/utils";
 
 const scrypt = promisify(_scrypt);
 
@@ -18,12 +20,9 @@ export class AuthService {
     const password = randomBytes(6).toString("hex");
     const username = randomBytes(6).toString("hex");
 
-    const salt = randomBytes(8).toString("hex");
-    const hash = (await scrypt(password, salt, 32)) as Buffer;
+    const hashedPasswod = await getHashedPassword(password);
 
-    const result = salt + "." + hash.toString("hex");
-
-    await this.usersService.create(username, result);
+    await this.usersService.create(username, hashedPasswod);
 
     return { username, password };
   }
