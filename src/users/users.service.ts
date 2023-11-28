@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Repository, Like, FindOperator } from "typeorm";
+import { Repository, FindOperator } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { User } from "../entities/user.entity";

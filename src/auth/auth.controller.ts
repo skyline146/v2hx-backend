@@ -96,11 +96,12 @@ export class AuthController {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      expires: new Date(Date.now() + 60 * 60 * 1000),
+      expires: new Date(Date.now() + 15 * 60 * 1000),
     });
     res.cookie("refreshToken", user.refreshToken, {
       httpOnly: true,
       secure: true,
+      path: "/api/auth",
       sameSite: "strict",
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
@@ -110,14 +111,24 @@ export class AuthController {
 
   @UseGuards(RefreshJwtGuard)
   @Get("/refresh")
-  async refreshToken(@Request() req) {
-    return this.authService.refreshToken(req.user);
+  async refreshToken(@Request() req, @Res({ passthrough: true }) res: Response) {
+    const { accessToken } = await this.authService.refreshToken(req.user);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      expires: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    return true;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get("/logout-web")
   logOut(@Res({ passthrough: true }) res: Response) {
     res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", { path: "/api/auth" });
 
     return true;
   }

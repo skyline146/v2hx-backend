@@ -143,13 +143,20 @@ export class UsersController {
       username: body.newUsername,
     });
 
-    const { accessToken } = await this.authService.refreshToken(newUser);
+    const { accessToken, refreshToken } = await this.authService.refreshToken(newUser);
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      expires: new Date(Date.now() + 60 * 60 * 1000),
+      expires: new Date(Date.now() + 15 * 60 * 1000),
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      path: "/api/auth",
+      sameSite: "strict",
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     return "Username changed!";

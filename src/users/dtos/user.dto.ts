@@ -6,6 +6,9 @@ export class UserDto {
   username: string;
 
   @IsString()
+  discord_username: string;
+
+  @IsString()
   @Exclude()
   password: string;
 

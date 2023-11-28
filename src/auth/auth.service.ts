@@ -16,7 +16,7 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  async signUp() {
+  async signUp(): Promise<{ username: string; password: string }> {
     const password = randomBytes(6).toString("hex");
     const username = randomBytes(6).toString("hex");
 
@@ -28,15 +28,12 @@ export class AuthService {
   }
 
   async signIn(user: User) {
-    const payload = {
-      username: user.username,
-      admin: user.admin,
-    };
+    const { accessToken, refreshToken } = this.signJwt(user);
 
     return {
       ...user,
-      accessToken: this.jwtService.sign(payload),
-      refreshToken: this.jwtService.sign(payload, { expiresIn: "7d" }),
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -49,6 +46,10 @@ export class AuthService {
   }
 
   async refreshToken(user: User) {
+    return this.signJwt(user);
+  }
+
+  signJwt(user: User) {
     const payload = {
       username: user.username,
       admin: user.admin,
@@ -56,10 +57,11 @@ export class AuthService {
 
     return {
       accessToken: this.jwtService.sign(payload),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: "7d" }),
     };
   }
 
-  async validateUser(username: string, password: string) {
+  async validateUser(username: string, password: string): Promise<User> {
     const user = await this.usersService.findOne({ username });
 
     if (!user) {

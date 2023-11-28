@@ -19,7 +19,7 @@ import { RefreshJwtStrategy } from "./strategies/refreshToken-strategy";
       useFactory: async (configService: ConfigService) => ({
         secret: `${configService.get<string>("JWT_SECRET")}`,
         signOptions: {
-          expiresIn: "1h",
+          expiresIn: "15m",
         },
       }),
       inject: [ConfigService],
