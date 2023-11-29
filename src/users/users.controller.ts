@@ -29,7 +29,7 @@ import { ChangeUserDto } from "./dtos/change-user.dto";
 import { Public } from "src/decorators/public.decorator";
 import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
 import { InfoService } from "src/info/info.service";
-import { getHashedPassword } from "src/utils";
+import { getCookieOptions, getHashedPassword } from "src/utils";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -145,19 +145,8 @@ export class UsersController {
 
     const { accessToken, refreshToken } = await this.authService.refreshToken(newUser);
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      expires: new Date(Date.now() + 15 * 60 * 1000),
-    });
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      path: "/api/auth",
-      sameSite: "strict",
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    res.cookie("accessToken", accessToken, getCookieOptions("accessToken"));
+    res.cookie("refreshToken", refreshToken, getCookieOptions("refreshToken", "/api/auth"));
 
     return "Username changed!";
   }
@@ -171,17 +160,5 @@ export class UsersController {
     await this.usersService.update(req.user.username, { password: newHashedPassword });
 
     return "Password changed!";
-  }
-
-  @Public()
-  @Get("/:username/subscription")
-  async getDate(@Param("username") username: string) {
-    const user = await this.usersService.findOne({ username });
-
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-
-    return { expire_date: user.expire_date };
   }
 }

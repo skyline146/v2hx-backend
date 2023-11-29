@@ -22,7 +22,7 @@ import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
-import { checkActiveSubscription } from "src/utils";
+import { checkActiveSubscription, getCookieOptions } from "src/utils";
 
 @Controller("auth")
 export class AuthController {
@@ -92,19 +92,8 @@ export class AuthController {
   async signIn(@Request() req, @Res({ passthrough: true }) res: Response) {
     const user = await this.authService.signIn(req.user);
 
-    res.cookie("accessToken", user.accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      expires: new Date(Date.now() + 15 * 60 * 1000),
-    });
-    res.cookie("refreshToken", user.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      path: "/api/auth",
-      sameSite: "strict",
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+    res.cookie("accessToken", user.accessToken, getCookieOptions("accessToken"));
+    res.cookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken", "/api/auth"));
 
     return new UserDto(user);
   }
@@ -114,12 +103,7 @@ export class AuthController {
   async refreshToken(@Request() req, @Res({ passthrough: true }) res: Response) {
     const { accessToken } = await this.authService.refreshToken(req.user);
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      expires: new Date(Date.now() + 15 * 60 * 1000),
-    });
+    res.cookie("accessToken", accessToken, getCookieOptions("accessToken"));
 
     return true;
   }
