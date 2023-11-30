@@ -15,7 +15,7 @@ export class AppController {
   }
 
   @Get("/loader")
-  getLoader(@Res({ passthrough: true }) res: Response) {
+  getLoader(@Res({ passthrough: true }) res: Response): StreamableFile {
     const file = createReadStream(join(process.cwd(), "V2HX.exe"));
     res.set({ "Content-Disposition": 'attachment; filename="V2HX.exe"' });
 

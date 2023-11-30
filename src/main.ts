@@ -1,12 +1,11 @@
 import { NestFactory, Reflector } from "@nestjs/core";
-import { AppModule } from "./app.module";
 import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
 import cookieParser from "cookie-parser";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // const configService = app.get(ConfigService);
 
   const allowed_origins = process.env.ALLOWED_ORIGINS;
   app.enableCors({ origin: allowed_origins.split(","), credentials: true });

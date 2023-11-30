@@ -1,4 +1,13 @@
-import { Body, Controller, Get, NotFoundException, Patch, Res, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Patch,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from "@nestjs/common";
 import type { Response } from "express";
 import { createReadStream } from "fs";
 import { join } from "path";
@@ -16,15 +25,22 @@ export class InfoController {
 
   @Get("")
   async getInfo() {
-    const { cheat_version, loader_version, status } = await this.infoService.get();
-
-    return { cheat_version, loader_version, status };
+    return await this.infoService.get();
   }
 
   @UseGuards(AdminGuard)
   @Patch("")
-  changeInfo(@Body() body: Partial<InfoDto>) {
+  async changeInfo(@Body() body: Partial<InfoDto>) {
     return this.infoService.update(body);
+  }
+
+  @UseGuards(AdminGuard)
+  @Get("/logs")
+  getLogs(@Res() res: Response) {
+    const file = createReadStream(join(process.cwd(), "src/logs.log"));
+    res.set({ "Content-Type": "text/plain" });
+
+    file.pipe(res);
   }
 
   @Get("/offsets")
@@ -35,6 +51,10 @@ export class InfoController {
 
     if (!user) {
       throw new NotFoundException("User not found");
+    }
+
+    if (user.ban) {
+      throw new UnauthorizedException("You have no access, please create ticket in discord");
     }
 
     checkActiveSubscription(user.expire_date);

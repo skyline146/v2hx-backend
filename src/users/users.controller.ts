@@ -12,20 +12,21 @@ import {
   Res,
   Query,
   NotFoundException,
+  UnauthorizedException,
+  Inject,
 } from "@nestjs/common";
 import type { Response } from "express";
 import { randomBytes } from "crypto";
 import { Not, And, Like } from "typeorm";
+import { Logger } from "winston";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 
 import { UsersService } from "./users.service";
 import { UserDto } from "./dtos/user.dto";
 import { AuthService } from "../auth/auth.service";
-// import { AdminGuard } from "../guards/admin.guard";
 import { AdminGuard } from "src/guards/admin.guard";
-// import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
-// import { Public } from "../decorators/public.decorator";
 import { Public } from "src/decorators/public.decorator";
 import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
 import { InfoService } from "src/info/info.service";
@@ -37,13 +38,16 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private authService: AuthService,
-    private infoService: InfoService
+    private infoService: InfoService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
   @UseGuards(AdminGuard)
   @Post("")
   async createUser() {
-    return await this.authService.signUp();
+    const newUser = await this.authService.signUp();
+    this.logger.info(`New account created: ${newUser.username}.`);
+    return newUser;
   }
 
   @UseGuards(AdminGuard)
@@ -77,6 +81,8 @@ export class UsersController {
       }))
     );
 
+    // this.logger.info("Added 1 free day.");
+
     return true;
   }
 
@@ -92,6 +98,10 @@ export class UsersController {
       throw new NotFoundException("User not found");
     }
 
+    if (user.ban) {
+      throw new UnauthorizedException("You have no access, please create ticket in discord");
+    }
+
     const { expire_date, username } = user;
 
     return { expire_date, username, cheat_version };
@@ -100,6 +110,17 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Patch("/:username")
   async updateUser(@Param("username") username: string, @Body() body: Partial<UserDto>) {
+    const oldUser = await this.usersService.findOne({ username });
+
+    const changesObject = {};
+    Object.keys(body).forEach((key) => {
+      if (oldUser[key] !== body[key]) {
+        changesObject[key] = `from: ${oldUser[key]} to: ${body[key]}`;
+      }
+    });
+
+    this.logger.info(`Admin changed ${username}: ${JSON.stringify(changesObject, null, "\t")}`);
+
     return await this.usersService.update(username, body);
   }
 
@@ -124,6 +145,7 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Delete("/:username")
   async deleteUser(@Param("username") username: string) {
+    this.logger.warn(`${username} was deleted.`);
     return await this.usersService.remove(username);
   }
 
@@ -147,6 +169,8 @@ export class UsersController {
 
     res.cookie("accessToken", accessToken, getCookieOptions("accessToken"));
     res.cookie("refreshToken", refreshToken, getCookieOptions("refreshToken", "/api/auth"));
+
+    this.logger.info(`${req.user.username} changed username to: ${body.newUsername}.`);
 
     return "Username changed!";
   }

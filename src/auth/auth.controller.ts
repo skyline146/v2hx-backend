@@ -8,17 +8,18 @@ import {
   StreamableFile,
   Request,
   UseGuards,
+  Inject,
 } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
 import type { Response } from "express";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { Logger } from "winston";
 
 import { AuthService } from "./auth.service";
-// import { UsersService } from "../users/users.service";
 import { UsersService } from "src/users/users.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { LoginUserDto } from "./dtos/login-user.dto";
-// import { UserDto } from "../users/dtos/user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
@@ -28,7 +29,8 @@ import { checkActiveSubscription, getCookieOptions } from "src/utils";
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
   //login in loader
@@ -70,6 +72,10 @@ export class AuthController {
           warn: user.warn + 1,
         });
 
+        this.logger.warn(
+          `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}`
+        );
+
         throw new UnauthorizedException("Hwid does not match");
       }
     }
@@ -80,6 +86,8 @@ export class AuthController {
       last_mac_address: mac_address,
       last_entry_date: new Date().toISOString(),
     });
+
+    // this.logger.info(`User ${user.username} successfully logged in loader.`);
 
     const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));
     res.set({ "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"' });

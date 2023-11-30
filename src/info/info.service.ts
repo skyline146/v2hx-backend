@@ -9,7 +9,10 @@ export class InfoService {
   constructor(@InjectRepository(Info) private infoRepo: Repository<Info>) {}
 
   async get() {
-    return await this.infoRepo.findOne({ where: { cheat_version: undefined } });
+    const { status, cheat_version, loader_version } = await this.infoRepo.findOne({
+      where: { cheat_version: undefined },
+    });
+    return { status, cheat_version, loader_version };
   }
 
   async update(data: Partial<InfoDto>) {

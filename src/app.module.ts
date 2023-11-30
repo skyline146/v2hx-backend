@@ -3,14 +3,15 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { WinstonModule } from "nest-winston";
+import winston from "winston";
+import { join } from "path";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { UsersModule } from "./users/users.module";
-// import { User } from "./entities/user.entity";
 import { AuthModule } from "./auth/auth.module";
 import { InfoModule } from "./info/info.module";
-// import { Info } from "./entities/info.entity";
 import typeorm from "./config/typeorm";
 
 @Module({
@@ -30,6 +31,21 @@ import typeorm from "./config/typeorm";
         limit: 10,
       },
     ]),
+    WinstonModule.forRoot({
+      format: winston.format.combine(
+        winston.format.timestamp({ format: new Date().toLocaleString() }),
+        winston.format.printf(
+          (log) => `${log.timestamp} - [${log.level.toUpperCase()}]: ${log.message}`
+        )
+      ),
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({
+          dirname: join(process.cwd(), "src"),
+          filename: "logs.log",
+        }),
+      ],
+    }),
     UsersModule,
     InfoModule,
     AuthModule,
@@ -38,8 +54,3 @@ import typeorm from "./config/typeorm";
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
-
-// type: "sqlite",
-//       database: "db.sqlite",
-//       entities: [User, Info],
-//       synchronize: true,
