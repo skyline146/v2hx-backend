@@ -27,7 +27,7 @@ export class AuthService {
     return { username, password };
   }
 
-  async signIn(user: User) {
+  async signIn(user: { admin: boolean; username: string }) {
     const { accessToken, refreshToken } = this.signJwt(user);
 
     return {
@@ -37,7 +37,7 @@ export class AuthService {
     };
   }
 
-  async validateToken(token: string) {
+  validateToken(token: string) {
     try {
       return this.jwtService.verify(token);
     } catch (err) {
@@ -45,11 +45,11 @@ export class AuthService {
     }
   }
 
-  async refreshToken(user: User) {
+  async refreshToken(user: { admin: boolean; username: string }) {
     return this.signJwt(user);
   }
 
-  signJwt(user: User) {
+  signJwt(user: { admin: boolean; username: string }) {
     const payload = {
       username: user.username,
       admin: user.admin,

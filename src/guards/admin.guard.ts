@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Observable } from "rxjs";
+import { FastifyRequest } from "fastify";
 import { AuthService } from "../auth/auth.service";
 // import { AuthService } from "src/auth/auth.service";
 
@@ -7,16 +8,16 @@ import { AuthService } from "../auth/auth.service";
 export class AdminGuard implements CanActivate {
   constructor(private authService: AuthService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request: FastifyRequest = context.switchToHttp().getRequest();
 
-    const { accessToken }: any = request.cookies;
+    const accessToken: string = request.cookies["accessToken"];
 
     if (!accessToken) {
       throw new UnauthorizedException("Please provide token");
     }
 
-    const data = await this.authService.validateToken(accessToken);
+    const user = this.authService.validateToken(accessToken);
 
-    return data.admin;
+    return user.admin;
   }
 }

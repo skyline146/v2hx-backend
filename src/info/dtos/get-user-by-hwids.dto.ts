@@ -1,6 +1,6 @@
 import { IsString } from "class-validator";
 
-export class GetOffsetsDto {
+export class GetUserByHwidsDto {
   @IsString()
   hwid1: string;
 

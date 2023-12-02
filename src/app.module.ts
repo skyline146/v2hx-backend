@@ -13,6 +13,7 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { InfoModule } from "./info/info.module";
 import typeorm from "./config/typeorm";
+import { FastifyThrottlerGuard } from "./guards/throttler.guard";
 
 @Module({
   imports: [
@@ -51,6 +52,6 @@ import typeorm from "./config/typeorm";
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [AppService, { provide: APP_GUARD, useClass: FastifyThrottlerGuard }],
 })
 export class AppModule {}

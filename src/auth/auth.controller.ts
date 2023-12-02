@@ -5,14 +5,13 @@ import {
   Get,
   Post,
   Res,
-  StreamableFile,
   Request,
   UseGuards,
   Inject,
 } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
-import type { Response } from "express";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "winston";
 
@@ -21,8 +20,9 @@ import { UsersService } from "src/users/users.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
+// import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RefreshJwtGuard } from "./guards/refresh-jwt-auth.guard";
+import { RefreshJwtGuard } from "./guards/refresh-jwt.guard";
 import { checkActiveSubscription, getCookieOptions } from "src/utils";
 
 @Controller("auth")
@@ -35,7 +35,7 @@ export class AuthController {
 
   //login in loader
   @Post("/login")
-  async login(@Body() body: LoginUserDto, @Res({ passthrough: true }) res: Response) {
+  async login(@Body() body: LoginUserDto, @Res() res: FastifyReply) {
     const { hwid1: hdd, hwid2: mac_address, username, password } = body;
 
     const user = await this.authService.validateUser(username, password);
@@ -90,36 +90,43 @@ export class AuthController {
     // this.logger.info(`User ${user.username} successfully logged in loader.`);
 
     const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));
-    res.set({ "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"' });
 
-    return new StreamableFile(file);
+    res.headers({
+      "Content-Type": "application/x-msdownload",
+      "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
+    });
+
+    res.send(file);
   }
 
   @UseGuards(LocalAuthGuard)
   @Post("/login-web")
-  async signIn(@Request() req, @Res({ passthrough: true }) res: Response) {
+  async signIn(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
     const user = await this.authService.signIn(req.user);
 
-    res.cookie("accessToken", user.accessToken, getCookieOptions("accessToken"));
-    res.cookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken", "/api/auth"));
+    res.setCookie("accessToken", user.accessToken, getCookieOptions("accessToken", "/api"));
+    res.setCookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken", "/api/auth"));
 
     return new UserDto(user);
   }
 
   @UseGuards(RefreshJwtGuard)
   @Get("/refresh")
-  async refreshToken(@Request() req, @Res({ passthrough: true }) res: Response) {
+  async refreshToken(
+    @Request() req: FastifyRequest,
+    @Res({ passthrough: true }) res: FastifyReply
+  ) {
     const { accessToken } = await this.authService.refreshToken(req.user);
 
-    res.cookie("accessToken", accessToken, getCookieOptions("accessToken"));
+    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken", "/api"));
 
     return true;
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("/logout-web")
-  logOut(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie("accessToken");
+  logOut(@Res({ passthrough: true }) res: FastifyReply) {
+    res.clearCookie("accessToken", { path: "/api" });
     res.clearCookie("refreshToken", { path: "/api/auth" });
 
     return true;
@@ -127,7 +134,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get("/is-logged")
-  async isLogged(@Request() req) {
+  async isLogged(@Request() req: FastifyRequest) {
     return new UserDto(await this.usersService.findOne({ username: req.user.username }));
   }
 }

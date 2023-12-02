@@ -1,7 +1,7 @@
-import { Controller, Get, Res, StreamableFile } from "@nestjs/common";
+import { Controller, Get, Res } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
-import type { Response } from "express";
+import { FastifyReply } from "fastify";
 
 import { AppService } from "./app.service";
 
@@ -15,10 +15,14 @@ export class AppController {
   }
 
   @Get("/loader")
-  getLoader(@Res({ passthrough: true }) res: Response): StreamableFile {
+  getLoader(@Res() res: FastifyReply) {
     const file = createReadStream(join(process.cwd(), "V2HX.exe"));
-    res.set({ "Content-Disposition": 'attachment; filename="V2HX.exe"' });
 
-    return new StreamableFile(file);
+    res.headers({
+      "Content-Type": "application/x-msdownload",
+      "Content-Disposition": 'attachment; filename="V2HX.exe"',
+    });
+
+    res.send(file);
   }
 }

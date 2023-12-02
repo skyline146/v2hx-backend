@@ -15,7 +15,7 @@ import {
   UnauthorizedException,
   Inject,
 } from "@nestjs/common";
-import type { Response } from "express";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { randomBytes } from "crypto";
 import { Not, And, Like } from "typeorm";
 import { Logger } from "winston";
@@ -28,7 +28,7 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { ChangeUserDto } from "./dtos/change-user.dto";
 import { Public } from "src/decorators/public.decorator";
-import { GetOffsetsDto } from "src/info/dtos/getOffsets.dto";
+import { GetUserByHwidsDto } from "src/info/dtos/get-user-by-hwids.dto";
 import { InfoService } from "src/info/info.service";
 import { getCookieOptions, getHashedPassword } from "src/utils";
 
@@ -88,8 +88,8 @@ export class UsersController {
 
   @Public()
   @Get("/get-by-hwids")
-  async getUserByHwids(@Body() body: GetOffsetsDto) {
-    const { hwid1: hdd, hwid2: mac_address } = body;
+  async getUserByHwids(@Query() query: GetUserByHwidsDto) {
+    const { hwid1: hdd, hwid2: mac_address } = query;
 
     const user = await this.usersService.findOne({ hdd, mac_address });
     const { cheat_version } = await this.infoService.get();
@@ -151,9 +151,9 @@ export class UsersController {
 
   @Post("/change-username")
   async changeUsername(
-    @Request() req,
+    @Request() req: FastifyRequest,
     @Body() body: ChangeUserDto,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: FastifyReply
   ) {
     const user = await this.usersService.findOne({ username: body.newUsername });
 
@@ -167,8 +167,8 @@ export class UsersController {
 
     const { accessToken, refreshToken } = await this.authService.refreshToken(newUser);
 
-    res.cookie("accessToken", accessToken, getCookieOptions("accessToken"));
-    res.cookie("refreshToken", refreshToken, getCookieOptions("refreshToken", "/api/auth"));
+    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken", "/api"));
+    res.setCookie("refreshToken", refreshToken, getCookieOptions("refreshToken", "/api/auth"));
 
     this.logger.info(`${req.user.username} changed username to: ${body.newUsername}.`);
 
@@ -176,7 +176,7 @@ export class UsersController {
   }
 
   @Post("/change-password")
-  async changePassword(@Request() req, @Body() body: ChangeUserDto) {
+  async changePassword(@Request() req: FastifyRequest, @Body() body: ChangeUserDto) {
     await this.authService.validateUser(req.user.username, body.password);
 
     const newHashedPassword = await getHashedPassword(body.newPassword);

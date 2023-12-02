@@ -4,18 +4,19 @@ import {
   Get,
   NotFoundException,
   Patch,
+  Query,
   Res,
   UnauthorizedException,
   UseGuards,
 } from "@nestjs/common";
-import type { Response } from "express";
 import { createReadStream } from "fs";
 import { join } from "path";
+import { FastifyReply } from "fastify";
 
 import { InfoService } from "./info.service";
 import { InfoDto } from "./dtos/info.dto";
 import { AdminGuard } from "src/guards/admin.guard";
-import { GetOffsetsDto } from "./dtos/getOffsets.dto";
+import { GetUserByHwidsDto } from "./dtos/get-user-by-hwids.dto";
 import { UsersService } from "src/users/users.service";
 import { checkActiveSubscription } from "src/utils";
 
@@ -36,16 +37,17 @@ export class InfoController {
 
   @UseGuards(AdminGuard)
   @Get("/logs")
-  getLogs(@Res() res: Response) {
+  async getLogs(@Res() res: FastifyReply) {
     const file = createReadStream(join(process.cwd(), "src/logs.log"));
-    res.set({ "Content-Type": "text/plain" });
 
-    file.pipe(res);
+    res.headers({ "Content-Type": "text/plain" });
+
+    res.send(file);
   }
 
   @Get("/offsets")
-  async getOffsets(@Body() body: GetOffsetsDto, @Res() res: Response) {
-    const { hwid1: hdd, hwid2: mac_address } = body;
+  async getOffsets(@Query() query: GetUserByHwidsDto, @Res() res: FastifyReply) {
+    const { hwid1: hdd, hwid2: mac_address } = query;
 
     const user = await this.usersService.findOne({ hdd, mac_address });
 
@@ -60,8 +62,9 @@ export class InfoController {
     checkActiveSubscription(user.expire_date);
 
     const file = createReadStream(join(process.cwd(), "offsets.json"));
-    res.set({ "Content-Type": "application/json" });
 
-    file.pipe(res);
+    res.headers({ "Content-Type": "application/json" });
+
+    res.send(file);
   }
 }
