@@ -1,0 +1,133 @@
+{
+  "struct1": {
+    "offset1": 144 
+  },
+  "struct2": {
+    "offset2": 264,
+    "offset3": 276,
+    "offset4": 288
+  },
+  "struct3": { "offset5": 2304 },
+  "struct4": { "offset6": 1232 },
+  "struct5": {
+    "offset7": 1480,
+    "offset8": 1664
+  },
+  "struct6": { "offset9": 1507 },
+  "struct7": { "offset10": 1112 },
+  "struct8": { "offset11": 1720 },
+  "struct9": { "offset12": 1880 },
+  "struct10": {
+    "offset13": 1832,
+    "offset14": 1840
+  },
+  "struct11": {
+    "offset15": 56,
+    "offset16": 60,
+    "offset17": 584
+  },
+  "struct12": {
+    "offset18": 56,
+    "offset19": 72,
+    "offset20": 120
+  },
+  "struct13": {
+    "offset21": 2056 
+  },
+  "struct14": {
+    "offset22": 8,
+    "offset23": 12,
+    "offset24": 16,
+    "offset25": 128
+  },
+  "struct15": {
+    "offset26": 2088,
+    "offset27": 2624,
+    "offset28": 2628,
+    "offset29": 2656,
+    "offset30": 2676
+  },
+  "struct16": { "offset31": 304 },
+  "struct17": {
+    "offset32": 1040,
+    "offset33": 1056,
+    "offset34": 1072,
+    "offset35": 1088
+  },
+  "struct18": { "offset36": 1368 },
+  "struct19": {
+    "offset37": 1256,
+    "offset38": 1272,
+    "offset39": 1288
+  },
+  "struct20": { "offset40": 2232 },
+  "struct21": { "offset41": 816 },
+  "struct22": { "offset42": 32 },
+  "struct23": { "offset43": 336 },
+  "struct24": { "offset44": 392 },
+  "struct25": {
+    "offset45": 1468,
+    "offset46": 1472,
+    "offset47": 1832,
+    "offset48": 1848,
+    "offset49": 1976,
+    "offset50": 1980
+  },
+  "struct26": {
+    "offset51": 1248,
+    "offset52": 1252
+  },
+  "struct27": { "offset53": 1064 },
+  "struct28": { "offset54": 1224 },
+  "struct29": {
+    "offset55": 2168,
+    "offset56": 2336
+  },
+  "struct30": {
+    "offset57": 2200,
+    "offset58": 2224
+  },
+  "struct31": { "offset59": 2120 },
+  "struct32": { "offset60": 2232 },
+  "struct33": { "offset61": 1184 },
+  "struct34": {
+    "offset62": 40,
+    "offset63": 64,
+    "offset64": 176
+  },
+  "struct35": { "offset65": 72 },
+  "struct36": { "offset66": 1112 },
+  "struct37": {
+    "offset67": 1528,
+    "offset68": 1544,
+    "offset69": 1568
+  },
+  "struct38": { "offset70": 1600 },
+  "struct39": { "offset71": 1000 },
+  "struct40": { "offset72": 70 },
+  "struct41": { "offset73": 1200 },
+  "struct42": { "offset74": 1640 },
+  "struct43": { "offset75": 2072 },
+  "struct44": { "offset76": 1312 },
+  "struct45": { "offset77": 1440 },
+  "struct46": {
+    "offset78": 744,
+    "offset79": 752
+  },
+  "struct47": { "offset80": 228 },
+  "struct48": { "offset81": 3336 },
+  "struct49": { "offset82": 5176 },
+  "struct50": { "offset83": 404 },
+  "struct51": { "offset84": 4288 },
+  "struct52": { "offset85": 1088 },
+  "struct53": { "offset86": 1440 },
+  "struct54": {
+    "offset87": 5712,
+    "offset88": 5724
+  },
+  "struct55": {
+    "offset89": 496,
+    "offset90": 512
+  },
+  "struct56": { "offset91": 5977 }
+}
