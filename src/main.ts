@@ -1,6 +1,5 @@
-import { NestFactory, Reflector } from "@nestjs/core";
+import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
-import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
@@ -21,10 +20,6 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix("/api");
-
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   await app.listen(3000, "0.0.0.0");
 }

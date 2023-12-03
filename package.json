@@ -34,15 +34,15 @@
     "@nestjs/platform-fastify": "^10.2.10",
     "@nestjs/throttler": "^5.0.1",
     "@nestjs/typeorm": "^10.0.0",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.0",
     "fastify": "^4.24.3",
     "nest-winston": "^1.9.4",
+    "nestjs-zod": "^3.0.0",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.17",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",

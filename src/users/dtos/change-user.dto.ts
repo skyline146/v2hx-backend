@@ -1,16 +1,10 @@
-import { IsOptional, IsString, Length } from "class-validator";
+import { createZodDto } from "nestjs-zod";
+import { z } from "nestjs-zod/z";
 
-export class ChangeUserDto {
-  @IsString()
-  @IsOptional()
-  @Length(3, 50)
-  newUsername: string;
+const ChangeUserSchema = z.object({
+  newUsername: z.string().min(3).max(30).optional(),
+  password: z.string().optional(),
+  newPassword: z.string().optional(),
+});
 
-  @IsString()
-  @IsOptional()
-  password: string;
-
-  @IsString()
-  @IsOptional()
-  newPassword: string;
-}
+export class ChangeUserDto extends createZodDto(ChangeUserSchema) {}

@@ -1,12 +1,10 @@
-import { IsString } from "class-validator";
+import { createZodDto } from "nestjs-zod";
+import { z } from "nestjs-zod/z";
 
-export class InfoDto {
-  @IsString()
-  status: string;
+const InfoSchema = z.object({
+  status: z.string(),
+  cheat_version: z.string(),
+  loader_version: z.string(),
+});
 
-  @IsString()
-  cheat_version: string;
-
-  @IsString()
-  loader_version: string;
-}
+export class InfoDto extends createZodDto(InfoSchema) {}

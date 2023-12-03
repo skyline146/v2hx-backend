@@ -1,15 +1,11 @@
-import { IsString } from "class-validator";
+import { createZodDto } from "nestjs-zod";
+import { z } from "nestjs-zod/z";
 
-export class LoginUserDto {
-  @IsString()
-  username: string;
+const LoginUserSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  hwid1: z.string(),
+  hwid2: z.string(),
+});
 
-  @IsString()
-  password: string;
-
-  @IsString()
-  hwid1: string;
-
-  @IsString()
-  hwid2: string;
-}
+export class LoginUserDto extends createZodDto(LoginUserSchema) {}

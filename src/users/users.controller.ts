@@ -20,17 +20,20 @@ import { randomBytes } from "crypto";
 import { Not, And, Like } from "typeorm";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { ZodSerializerDto } from "nestjs-zod";
 
 import { UsersService } from "./users.service";
-import { UserDto } from "./dtos/user.dto";
+import { InfoService } from "src/info/info.service";
 import { AuthService } from "../auth/auth.service";
+
 import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { ChangeUserDto } from "./dtos/change-user.dto";
 import { Public } from "src/decorators/public.decorator";
-import { GetUserByHwidsDto } from "src/info/dtos/get-user-by-hwids.dto";
-import { InfoService } from "src/info/info.service";
+
 import { getCookieOptions, getHashedPassword } from "src/utils";
+
+import { GetUserByHwidsDto } from "src/dtos/get-user-by-hwids.dto";
+import { ChangeUserDto, UsersTableDto, UserRowDto, GetUsersQueryDto } from "./dtos";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -51,8 +54,9 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @ZodSerializerDto(UsersTableDto)
   @Get("")
-  async getUsers(@Query() query: Partial<{ page: string; search_value: string | undefined }>) {
+  async getUsers(@Query() query: GetUsersQueryDto) {
     const { page, search_value } = query;
     const pageN: number = page ? +page : 1;
 
@@ -109,7 +113,7 @@ export class UsersController {
 
   @UseGuards(AdminGuard)
   @Patch("/:username")
-  async updateUser(@Param("username") username: string, @Body() body: Partial<UserDto>) {
+  async updateUser(@Param("username") username: string, @Body() body: UserRowDto) {
     const oldUser = await this.usersService.findOne({ username });
 
     const changesObject = {};
@@ -121,7 +125,7 @@ export class UsersController {
 
     this.logger.info(`Admin changed ${username}: ${JSON.stringify(changesObject, null, "\t")}`);
 
-    return await this.usersService.update(username, body);
+    await this.usersService.update(username, body);
   }
 
   @UseGuards(AdminGuard)

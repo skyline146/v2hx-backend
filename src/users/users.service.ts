@@ -3,7 +3,6 @@ import { Repository, FindOperator } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { User } from "../entities/user.entity";
-import { UserDto } from "./dtos/user.dto";
 
 type FindOneOptions = {
   username?: string;
@@ -52,7 +51,7 @@ export class UsersService {
   async remove(username: string) {
     const user = await this.userRepo.findOneBy({ username });
 
-    if (!user) {
+    if (!user || user.admin) {
       return null;
     }
 
@@ -63,13 +62,13 @@ export class UsersService {
     await this.userRepo.save(data);
   }
 
-  async update(username: string, newData: Partial<UserDto>) {
+  async update(username: string, newData: Partial<User>) {
     const user = await this.userRepo.findOneBy({ username });
 
     if (!user) {
       return null;
     }
 
-    return await this.userRepo.save(this.userRepo.merge(user, newData));
+    return await this.userRepo.save(Object.assign(user, newData));
   }
 }

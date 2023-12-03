@@ -14,13 +14,13 @@ import { join } from "path";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "winston";
+import { ZodSerializerDto } from "nestjs-zod";
 
 import { AuthService } from "./auth.service";
 import { UsersService } from "src/users/users.service";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-// import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RefreshJwtGuard } from "./guards/refresh-jwt.guard";
 import { checkActiveSubscription, getCookieOptions } from "src/utils";
@@ -100,6 +100,7 @@ export class AuthController {
   }
 
   @UseGuards(LocalAuthGuard)
+  @ZodSerializerDto(UserDto)
   @Post("/login-web")
   async signIn(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
     const user = await this.authService.signIn(req.user);
@@ -107,7 +108,14 @@ export class AuthController {
     res.setCookie("accessToken", user.accessToken, getCookieOptions("accessToken", "/api"));
     res.setCookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken", "/api/auth"));
 
-    return new UserDto(user);
+    return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @ZodSerializerDto(UserDto)
+  @Get("/is-logged")
+  async isLogged(@Request() req: FastifyRequest) {
+    return await this.usersService.findOne({ username: req.user.username });
   }
 
   @UseGuards(RefreshJwtGuard)
@@ -130,11 +138,5 @@ export class AuthController {
     res.clearCookie("refreshToken", { path: "/api/auth" });
 
     return true;
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("/is-logged")
-  async isLogged(@Request() req: FastifyRequest) {
-    return new UserDto(await this.usersService.findOne({ username: req.user.username }));
   }
 }

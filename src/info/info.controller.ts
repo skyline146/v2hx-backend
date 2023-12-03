@@ -12,11 +12,12 @@ import {
 import { createReadStream } from "fs";
 import { join } from "path";
 import { FastifyReply } from "fastify";
+import { ZodSerializerDto } from "nestjs-zod";
 
 import { InfoService } from "./info.service";
 import { InfoDto } from "./dtos/info.dto";
 import { AdminGuard } from "src/guards/admin.guard";
-import { GetUserByHwidsDto } from "./dtos/get-user-by-hwids.dto";
+import { GetUserByHwidsDto } from "../dtos/get-user-by-hwids.dto";
 import { UsersService } from "src/users/users.service";
 import { checkActiveSubscription } from "src/utils";
 
@@ -25,13 +26,15 @@ export class InfoController {
   constructor(private infoService: InfoService, private usersService: UsersService) {}
 
   @Get("")
+  @ZodSerializerDto(InfoDto)
   async getInfo() {
     return await this.infoService.get();
   }
 
   @UseGuards(AdminGuard)
+  @ZodSerializerDto(InfoDto)
   @Patch("")
-  async changeInfo(@Body() body: Partial<InfoDto>) {
+  async changeInfo(@Body() body: InfoDto) {
     return this.infoService.update(body);
   }
 
