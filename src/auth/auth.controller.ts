@@ -112,10 +112,12 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @ZodSerializerDto(UserDto)
+  // @ZodSerializerDto(UserDto)
   @Get("/is-logged")
   async isLogged(@Request() req: FastifyRequest) {
-    return await this.usersService.findOne({ username: req.user.username });
+    return Object.assign(await this.usersService.findOne({ username: req.user.username }), {
+      ip: req.ip,
+    });
   }
 
   @UseGuards(RefreshJwtGuard)

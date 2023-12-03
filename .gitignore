@@ -7,6 +7,8 @@ pgdata
 # #env
 .env
 
+#offsets
+
 # Logs
 logs
 *.log
