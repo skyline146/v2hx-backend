@@ -7,7 +7,10 @@ import fastifyCookie from "@fastify/cookie";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({ trustProxy: true })
+  );
   // const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
