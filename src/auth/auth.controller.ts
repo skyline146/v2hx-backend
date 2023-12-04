@@ -117,6 +117,7 @@ export class AuthController {
   async isLogged(@Request() req: FastifyRequest) {
     return Object.assign(await this.usersService.findOne({ username: req.user.username }), {
       ip: req.ip,
+      ips: req.ips,
     });
   }
 
