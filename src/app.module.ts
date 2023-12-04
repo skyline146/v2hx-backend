@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { CacheModule } from "@nestjs/cache-manager";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
@@ -27,6 +28,9 @@ import { FastifyThrottlerGuard } from "./guards/throttler.guard";
       isGlobal: true,
       load: [typeorm],
     }),
+    CacheModule.register({
+      isGlobal: true,
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: 10000,
@@ -35,7 +39,7 @@ import { FastifyThrottlerGuard } from "./guards/throttler.guard";
     ]),
     WinstonModule.forRoot({
       format: winston.format.combine(
-        winston.format.timestamp({ format: new Date().toLocaleString() }),
+        winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
         winston.format.printf(
           (log) => `${log.timestamp} - [${log.level.toUpperCase()}]: ${log.message}`
         )
