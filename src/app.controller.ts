@@ -16,7 +16,7 @@ export class AppController {
 
   @Get("/loader")
   getLoader(@Res() res: FastifyReply) {
-    const file = createReadStream(join(process.cwd(), "V2HX.exe"));
+    const file = createReadStream(join(process.cwd(), "resources/V2HX.exe"));
 
     res.headers({
       "Content-Type": "application/x-msdownload",

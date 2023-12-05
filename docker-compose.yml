@@ -27,9 +27,7 @@ services:
       - db
     volumes:
       - ./src:/backend/src
-      - ./offsets.json:/backend/offsets.json
-      - ./V2HX.exe:/backend/V2HX.exe
-      - ./SoT-DLC-v3.dll:/backend/SoT-DLC-v3.dll
+      - ./resources:/backend/resources
 
   frontend:
     build:

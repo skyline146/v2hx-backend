@@ -89,7 +89,7 @@ export class AuthController {
 
     // this.logger.info(`User ${user.username} successfully logged in loader.`);
 
-    const file = createReadStream(join(process.cwd(), "SoT-DLC-v3.dll"));
+    const file = createReadStream(join(process.cwd(), "resources/SoT-DLC-v3.dll"));
 
     res.headers({
       "Content-Type": "application/x-msdownload",

@@ -107,7 +107,9 @@ export class InfoController {
     // const encryptedOffsets = await this.cacheManager.get("offsets");
     // const cachedMinute = await this.cacheManager.get("minute");
 
-    const offsets = JSON.parse(readFileSync(join(process.cwd(), "offsets.json")).toString());
+    const offsets = JSON.parse(
+      readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
+    );
 
     const encryptedOffsets = transformOffsets(offsets, encrypt);
 
