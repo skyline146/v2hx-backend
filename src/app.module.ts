@@ -1,19 +1,21 @@
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { Module } from "@nestjs/common";
 import { CacheModule } from "@nestjs/cache-manager";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule } from "@nestjs/throttler";
-import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from "@nestjs/core";
-import { ConfigModule, ConfigService } from "@nestjs/config";
 import { WinstonModule } from "nest-winston";
 import winston from "winston";
-import { join } from "path";
 import { ZodValidationPipe, ZodSerializerInterceptor } from "nestjs-zod";
+import { join } from "path";
 
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { TokenModule } from "./token/token.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { InfoModule } from "./info/info.module";
+
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
 import typeorm from "./config/typeorm";
 import { FastifyThrottlerGuard } from "./guards/throttler.guard";
 
@@ -55,6 +57,7 @@ import { FastifyThrottlerGuard } from "./guards/throttler.guard";
     UsersModule,
     InfoModule,
     AuthModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [

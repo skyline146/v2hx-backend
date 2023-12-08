@@ -12,7 +12,6 @@ import {
   Res,
   Query,
   NotFoundException,
-  UnauthorizedException,
   Inject,
 } from "@nestjs/common";
 import { FastifyReply, FastifyRequest } from "fastify";
@@ -23,17 +22,22 @@ import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { ZodSerializerDto } from "nestjs-zod";
 
 import { UsersService } from "./users.service";
-import { InfoService } from "src/info/info.service";
 import { AuthService } from "../auth/auth.service";
-
+import { User } from "src/entities";
 import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
+import { TokenService } from "src/token/token.service";
+import { checkSubscription, getCookieOptions, getHashedPassword } from "src/utils";
 
-import { getCookieOptions, getHashedPassword } from "src/utils";
-
-import { GetUserByHwidsDto } from "src/dtos/get-user-by-hwids.dto";
-import { ChangeUserDto, UsersTableDto, UserRowDto, GetUsersQueryDto } from "./dtos";
+import {
+  ChangeUserDto,
+  UsersTableDto,
+  UserRowDto,
+  GetUsersQueryDto,
+  GetUserByHwidsDto,
+} from "./dtos";
+import { GetUserByHwidsResponse } from "./types";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -41,7 +45,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private authService: AuthService,
-    private infoService: InfoService,
+    private tokenService: TokenService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
@@ -72,18 +76,20 @@ export class UsersController {
   @UseGuards(AdminGuard)
   @Patch("/add-free-day")
   async addFreeDay() {
-    const users = (
-      await this.usersService.findAll({ expire_date: And(Not(""), Not("Lifetime")) })
-    ).filter((user) => new Date(user.expire_date).getTime() > Date.now());
-
-    await this.usersService.updateMany(
-      users.map((user) => ({
+    const users: User[] = (
+      await this.usersService.findAll({
+        expire_date: And(Not(""), Not("Lifetime")),
+      })
+    )
+      .filter((user) => checkSubscription(user.expire_date))
+      .map((user) => ({
         ...user,
         expire_date: new Date(
           new Date(user.expire_date).getTime() + 24 * 60 * 60 * 1000
         ).toISOString(),
-      }))
-    );
+      }));
+
+    await this.usersService.updateMany(users);
 
     // this.logger.info("Added 1 free day.");
 
@@ -92,23 +98,18 @@ export class UsersController {
 
   @Public()
   @Get("/get-by-hwids")
-  async getUserByHwids(@Query() query: GetUserByHwidsDto) {
+  async getUserByHwids(@Query() query: GetUserByHwidsDto): Promise<GetUserByHwidsResponse> {
     const { hwid1: hdd, hwid2: mac_address } = query;
 
     const user = await this.usersService.findOne({ hdd, mac_address });
-    const { cheat_version } = await this.infoService.get();
 
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    if (user.ban) {
-      throw new UnauthorizedException("You have no access, please create ticket in discord");
-    }
+    const { expire_date, username, ban } = user;
 
-    const { expire_date, username } = user;
-
-    return { expire_date, username, cheat_version };
+    return { expire_date, username, ban };
   }
 
   @UseGuards(AdminGuard)
@@ -169,10 +170,10 @@ export class UsersController {
       username: body.newUsername,
     });
 
-    const { accessToken, refreshToken } = await this.authService.refreshToken(newUser);
+    const { accessToken, refreshToken } = this.tokenService.refresh(newUser);
 
-    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken", "/api"));
-    res.setCookie("refreshToken", refreshToken, getCookieOptions("refreshToken", "/api/auth"));
+    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken"));
+    res.setCookie("refreshToken", refreshToken, getCookieOptions("refreshToken"));
 
     this.logger.info(`${req.user.username} changed username to: ${body.newUsername}.`);
 

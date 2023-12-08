@@ -14,43 +14,38 @@ import { join } from "path";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "winston";
-import { ZodSerializerDto } from "nestjs-zod";
+import { ZodGuard, ZodSerializerDto } from "nestjs-zod";
 
 import { AuthService } from "./auth.service";
 import { UsersService } from "src/users/users.service";
-import { LocalAuthGuard } from "./guards/local-auth.guard";
+import { LocalAuthGuard, RefreshJwtGuard, JwtAuthGuard } from "./guards";
+import { ActiveUserGuard } from "src/guards";
+import { TokenService } from "src/token/token.service";
+
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RefreshJwtGuard } from "./guards/refresh-jwt.guard";
-import { checkActiveSubscription, getCookieOptions } from "src/utils";
+import { getCookieOptions } from "src/utils";
 
 @Controller("auth")
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly tokenService: TokenService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
   //login in loader
+  @UseGuards(new ZodGuard("body", LoginUserDto), ActiveUserGuard)
   @Post("/login")
-  async login(@Body() body: LoginUserDto, @Res() res: FastifyReply) {
-    const { hwid1: hdd, hwid2: mac_address, username, password } = body;
+  async login(
+    @Body() body: LoginUserDto,
+    @Request() req: FastifyRequest,
+    @Res() res: FastifyReply
+  ) {
+    const { hwid1: hdd, hwid2: mac_address } = body;
 
-    const user = await this.authService.validateUser(username, password);
-
-    //check if account is banned
-    if (user.ban) {
-      this.usersService.update(user.username, {
-        last_entry_date: new Date().toISOString(),
-      });
-
-      throw new UnauthorizedException("You have no access, please create ticket in discord");
-    }
-
-    //check on active subscription
-    checkActiveSubscription(user.expire_date);
+    const user = req.user;
 
     //first login
     if (!user.hdd) {
@@ -82,8 +77,6 @@ export class AuthController {
 
     //validation passed, return dll
     this.usersService.update(user.username, {
-      last_hdd: hdd,
-      last_mac_address: mac_address,
       last_entry_date: new Date().toISOString(),
     });
 
@@ -91,22 +84,22 @@ export class AuthController {
 
     const file = createReadStream(join(process.cwd(), "resources/SoT-DLC-v3.dll"));
 
-    res.headers({
-      "Content-Type": "application/x-msdownload",
-      "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
-    });
-
-    res.send(file);
+    res
+      .headers({
+        "Content-Type": "application/x-msdownload",
+        "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
+      })
+      .send(file);
   }
 
   @UseGuards(LocalAuthGuard)
   @ZodSerializerDto(UserDto)
   @Post("/login-web")
-  async signIn(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
-    const user = await this.authService.signIn(req.user);
+  signIn(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
+    const user = this.authService.signIn(req.user);
 
-    res.setCookie("accessToken", user.accessToken, getCookieOptions("accessToken", "/api"));
-    res.setCookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken", "/api/auth"));
+    res.setCookie("accessToken", user.accessToken, getCookieOptions("accessToken"));
+    res.setCookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken"));
 
     return user;
   }
@@ -120,23 +113,20 @@ export class AuthController {
 
   @UseGuards(RefreshJwtGuard)
   @Get("/refresh")
-  async refreshToken(
-    @Request() req: FastifyRequest,
-    @Res({ passthrough: true }) res: FastifyReply
-  ) {
-    const { accessToken } = await this.authService.refreshToken(req.user);
+  refreshToken(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
+    const { accessToken } = this.tokenService.refresh(req.user);
 
-    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken", "/api"));
+    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken"));
 
-    return true;
+    return { refreshed: true };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("/logout-web")
   logOut(@Res({ passthrough: true }) res: FastifyReply) {
-    res.clearCookie("accessToken", { path: "/api" });
-    res.clearCookie("refreshToken", { path: "/api/auth" });
+    res.clearCookie("accessToken", getCookieOptions("accessToken"));
+    res.clearCookie("refreshToken", getCookieOptions("refreshToken"));
 
-    return true;
+    return { logged_out: true };
   }
 }

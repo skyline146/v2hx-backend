@@ -37,6 +37,9 @@ export class User {
   @Column({ default: "" })
   last_entry_date: string;
 
+  // @Column({ default: false })
+  // is_playing: boolean;
+
   @Column({ default: 0 })
   warn: number;
 

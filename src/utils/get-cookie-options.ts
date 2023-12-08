@@ -1,16 +1,23 @@
-import { CookieOptions } from "express";
+import { CookieSerializeOptions } from "@fastify/cookie";
 
-const cookiePeriods = {
+type Cookies = "accessToken" | "refreshToken";
+
+const cookiePeriods: Record<Cookies, number> = {
   accessToken: 15 * 60 * 1000,
   refreshToken: 7 * 24 * 60 * 60 * 1000,
 };
 
-export const getCookieOptions = (cookie: string, path?: string): CookieOptions => {
+const cookiePaths: Record<Cookies, string> = {
+  accessToken: "/api",
+  refreshToken: "/api/auth",
+};
+
+export const getCookieOptions = (name: string): CookieSerializeOptions => {
   return {
     httpOnly: true,
     secure: true,
-    path,
+    path: cookiePaths[name],
     sameSite: "strict",
-    expires: new Date(Date.now() + cookiePeriods[cookie]),
+    expires: new Date(Date.now() + cookiePeriods[name]),
   };
 };

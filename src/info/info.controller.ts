@@ -1,34 +1,22 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  NotFoundException,
-  Patch,
-  Query,
-  Res,
-  UnauthorizedException,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Inject, Patch, Res, UseGuards } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
+import { FastifyReply } from "fastify";
+import { ZodGuard, ZodSerializerDto } from "nestjs-zod";
 import { createReadStream, readFileSync } from "fs";
 import { join } from "path";
-import { FastifyReply } from "fastify";
-import { ZodSerializerDto } from "nestjs-zod";
 
 import { InfoService } from "./info.service";
+import { AdminGuard, ActiveUserGuard } from "src/guards";
+
 import { InfoDto } from "./dtos/info.dto";
-import { AdminGuard } from "src/guards/admin.guard";
-import { GetUserByHwidsDto } from "../dtos/get-user-by-hwids.dto";
-import { UsersService } from "src/users/users.service";
-import { checkActiveSubscription } from "src/utils";
+import { Offsets } from "./types";
+import { GetUserByHwidsDto } from "src/users/dtos";
 
 @Controller("info")
 export class InfoController {
   constructor(
     private infoService: InfoService,
-    private usersService: UsersService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
@@ -51,31 +39,12 @@ export class InfoController {
     const file = createReadStream(join(process.cwd(), "src/logs.log"));
 
     res.headers({ "Content-Type": "text/plain" });
-
     res.send(file);
   }
 
+  @UseGuards(new ZodGuard("query", GetUserByHwidsDto), ActiveUserGuard)
   @Get("/offsets")
-  async getOffsets(
-    @Query() query: GetUserByHwidsDto,
-    @Res({ passthrough: true }) res: FastifyReply
-  ) {
-    const { hwid1: hdd, hwid2: mac_address } = query;
-
-    const user = await this.usersService.findOne({ hdd, mac_address });
-
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
-
-    if (user.ban) {
-      throw new UnauthorizedException("You have no access, please create ticket in discord");
-    }
-
-    checkActiveSubscription(user.expire_date);
-
-    res.headers({ "Content-Type": "application/json" });
-
+  async getOffsets() {
     const year = new Date().getUTCFullYear();
     const months = new Date().getUTCMonth();
     const day = new Date().getUTCDate();
@@ -92,23 +61,23 @@ export class InfoController {
     //   return value / (year * months * day * hour * minute * 555);
     // }
 
-    function transformOffsets(json: any, func: (value: number) => number) {
-      const newOffsets = {};
+    function transformOffsets(json: Offsets, method: (value: number) => number) {
+      const newOffsets: Offsets = {};
       Object.keys(json).map((struct) => {
         newOffsets[struct] = {};
         Object.keys(json[struct]).map((offset) => {
-          newOffsets[struct][offset] = func(json[struct][offset]);
+          newOffsets[struct][offset] = method(json[struct][offset]);
         });
       });
 
       return newOffsets;
     }
 
-    const cachedOffsets = await this.cacheManager.get("offsets");
-    const cachedMinute = await this.cacheManager.get("minute");
+    const cachedOffsets = await this.cacheManager.get<Offsets>("offsets");
+    const cachedMinute = await this.cacheManager.get<number>("minute");
 
     if (!cachedOffsets || cachedMinute !== minute) {
-      const offsets = JSON.parse(
+      const offsets: Offsets = JSON.parse(
         readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
       );
 

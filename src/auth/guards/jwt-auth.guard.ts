@@ -1,11 +1,11 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { AuthService } from "../auth.service";
 import { FastifyRequest } from "fastify";
+import { TokenService } from "src/token/token.service";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private reflector: Reflector, private authService: AuthService) {}
+  constructor(private reflector: Reflector, private tokenService: TokenService) {}
 
   canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>("isPublic", [
@@ -19,12 +19,16 @@ export class JwtAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<FastifyRequest>();
 
-    const accessToken = request.cookies["accessToken"];
+    const accessToken: string = request.cookies["accessToken"];
 
-    const user = this.authService.validateToken(accessToken);
+    if (!accessToken) {
+      throw new UnauthorizedException("Provide token");
+    }
+
+    const user = this.tokenService.validate(accessToken);
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException("Invalid token");
     }
 
     request.user = { admin: user.admin, username: user.username };
