@@ -104,24 +104,22 @@ export class InfoController {
       return newOffsets;
     }
 
-    // const encryptedOffsets = await this.cacheManager.get("offsets");
-    // const cachedMinute = await this.cacheManager.get("minute");
+    const cachedOffsets = await this.cacheManager.get("offsets");
+    const cachedMinute = await this.cacheManager.get("minute");
 
-    const offsets = JSON.parse(
-      readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
-    );
+    if (!cachedOffsets || cachedMinute !== minute) {
+      const offsets = JSON.parse(
+        readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
+      );
 
-    const encryptedOffsets = transformOffsets(offsets, encrypt);
+      const encryptedOffsets = transformOffsets(offsets, encrypt);
 
-    // if (!encryptedOffsets || cachedMinute !== minute) {
-    //   const encryptedOffsets = transformOffsets(this.offsets, encrypt);
+      await this.cacheManager.set("offsets", encryptedOffsets, 0);
+      await this.cacheManager.set("minute", minute, 0);
 
-    //   await this.cacheManager.set("offsets", encryptedOffsets, 0);
-    //   await this.cacheManager.set("minute", minute, 0);
+      return encryptedOffsets;
+    }
 
-    //   return encryptedOffsets;
-    // }
-
-    return encryptedOffsets;
+    return cachedOffsets;
   }
 }
