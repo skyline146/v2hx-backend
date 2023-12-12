@@ -74,6 +74,15 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @ZodSerializerDto(UsersTableDto)
+  @Get("/online")
+  async getOnlineUsers() {
+    const [users, total] = await this.usersService.findAllCount({ online: true });
+
+    return { users, total };
+  }
+
+  @UseGuards(AdminGuard)
   @Patch("/add-free-day")
   async addFreeDay() {
     const users: User[] = (
@@ -107,9 +116,9 @@ export class UsersController {
       throw new NotFoundException("User not found");
     }
 
-    const { expire_date, username, ban } = user;
+    const { expire_date, username, ban, online } = user;
 
-    return { expire_date, username, ban };
+    return { expire_date, username, ban, online };
   }
 
   @UseGuards(AdminGuard)
@@ -136,6 +145,19 @@ export class UsersController {
   }
 
   @UseGuards(AdminGuard)
+  @Delete("/:username")
+  async deleteUser(@Param("username") username: string) {
+    this.logger.warn(`${username} was deleted.`);
+    return await this.usersService.remove(username);
+  }
+
+  @Public()
+  @Get("/:username/is-playing")
+  async getUserOnlineStatus(@Param("username") username: string) {
+    return this.usersService.findOne({ username });
+  }
+
+  @UseGuards(AdminGuard)
   @Post("/:username/reset-password")
   async resetPassword(@Param("username") username: string) {
     const newPassword = randomBytes(6).toString("hex");
@@ -145,13 +167,6 @@ export class UsersController {
     await this.usersService.update(username, { password: newHashedPassword });
 
     return { password: newPassword };
-  }
-
-  @UseGuards(AdminGuard)
-  @Delete("/:username")
-  async deleteUser(@Param("username") username: string) {
-    this.logger.warn(`${username} was deleted.`);
-    return await this.usersService.remove(username);
   }
 
   @Post("/change-username")

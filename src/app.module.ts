@@ -18,6 +18,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import typeorm from "./config/typeorm";
 import { FastifyThrottlerGuard } from "./guards/throttler.guard";
+import { AppGateway } from "./app.gateway";
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { FastifyThrottlerGuard } from "./guards/throttler.guard";
   controllers: [AppController],
   providers: [
     AppService,
+    AppGateway,
     { provide: APP_GUARD, useClass: FastifyThrottlerGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: ZodSerializerInterceptor },

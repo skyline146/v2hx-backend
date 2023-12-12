@@ -12,6 +12,7 @@ const UserRowSchema = z
     last_mac_address: z.string(),
     warn: z.number(),
     ban: z.boolean(),
+    online: z.boolean(),
   })
   .merge(UserSchema);
 

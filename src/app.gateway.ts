@@ -12,19 +12,25 @@ import { Socket, Server } from "socket.io";
 import { UsersService } from "src/users/users.service";
 
 @WebSocketGateway({ namespace: "api/playing" })
-export class AuthGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private usersService: UsersService) {}
 
   @WebSocketServer() server: Server;
 
-  handleConnection(client: Socket, ...args: any[]) {
-    console.log(`${client.handshake.query["username"]} is online now.`);
-    console.log(`Connected to socket: ${client.id}`);
+  async handleConnection(client: Socket) {
+    const username = client.handshake.query["username"] as string;
+    await this.usersService.update(username, { online: true });
+
+    // console.log(`${client.handshake.query["username"]} is online now.`);
+    // console.log(`Connected to socket: ${client.id}`);
   }
 
-  handleDisconnect(client: Socket) {
-    console.log(`${client.handshake.query["username"]} is offline now.`);
-    console.log(`Disconnected from socket: ${client.id}`);
+  async handleDisconnect(client: Socket) {
+    const username = client.handshake.query["username"] as string;
+    await this.usersService.update(username, { online: false });
+
+    // console.log(`${client.handshake.query["username"]} is offline now.`);
+    // console.log(`Disconnected from socket: ${client.id}`);
   }
 
   @SubscribeMessage("message")

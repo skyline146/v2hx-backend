@@ -14,6 +14,7 @@ type FindAllOptions = {
   expire_date?: FindOperator<string>;
   username?: FindOperator<string>;
   discord_username?: FindOperator<string>;
+  online?: boolean;
 };
 
 @Injectable()
@@ -35,6 +36,10 @@ export class UsersService {
 
   async findAll(options?: FindAllOptions) {
     return await this.userRepo.find({ where: options });
+  }
+
+  async findAllCount(options?: FindAllOptions) {
+    return await this.userRepo.findAndCount({ where: options });
   }
 
   async findLikePagination(page: number, options: FindAllOptions | FindAllOptions[]) {
