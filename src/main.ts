@@ -11,7 +11,6 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ trustProxy: true, ignoreTrailingSlash: true })
   );
-  // const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
 
@@ -24,6 +23,6 @@ async function bootstrap() {
 
   app.setGlobalPrefix("/api");
 
-  await app.listen(3000, "0.0.0.0");
+  await app.listen(7142, "0.0.0.0");
 }
 bootstrap();
