@@ -28,7 +28,7 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
 import { TokenService } from "src/token/token.service";
-import { checkSubscription, getCookieOptions, getHashedPassword } from "src/utils";
+import { checkSubscription, getCookieOptions, getHashedPassword } from "src/lib";
 
 import {
   ChangeUserDto,

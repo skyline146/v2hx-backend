@@ -4,7 +4,7 @@ import { promisify } from "util";
 
 import { UsersService } from "../users/users.service";
 import { User } from "../entities/user.entity";
-import { getHashedPassword } from "src/utils";
+import { getHashedPassword } from "src/lib";
 import { UserRowDto } from "src/users/dtos";
 import { TokenService } from "src/token/token.service";
 
@@ -17,7 +17,7 @@ export class AuthService {
     private readonly tokenService: TokenService
   ) {}
 
-  async signUp(): Promise<{ username: string; password: string }> {
+  async signUp() {
     const password = randomBytes(6).toString("hex");
     const username = randomBytes(6).toString("hex");
 

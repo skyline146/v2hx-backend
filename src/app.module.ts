@@ -4,8 +4,10 @@ import { Module } from "@nestjs/common";
 import { CacheModule } from "@nestjs/cache-manager";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ThrottlerModule } from "@nestjs/throttler";
+
 import { WinstonModule } from "nest-winston";
-import winston from "winston";
+import DailyRotateFile from "winston-daily-rotate-file";
+import { transports, format } from "winston";
 import { ZodValidationPipe, ZodSerializerInterceptor } from "nestjs-zod";
 import { join } from "path";
 
@@ -41,17 +43,17 @@ import { AppGateway } from "./app.gateway";
       },
     ]),
     WinstonModule.forRoot({
-      format: winston.format.combine(
-        winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-        winston.format.printf(
-          (log) => `${log.timestamp} - [${log.level.toUpperCase()}]: ${log.message}`
-        )
+      format: format.combine(
+        format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+        format.printf((log) => `${log.timestamp} - [${log.level.toUpperCase()}]: ${log.message}`)
       ),
       transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({
-          dirname: join(process.cwd(), "src"),
-          filename: "logs.log",
+        new transports.Console(),
+        new DailyRotateFile({
+          dirname: join(process.cwd(), "logs"),
+          filename: "%DATE%.log",
+          datePattern: "DD-MM-YYYY",
+          maxFiles: "14d",
         }),
       ],
     }),

@@ -15,7 +15,7 @@ export class InfoService {
     });
   }
 
-  async update(data: InfoDto) {
+  async update(data: InfoDto): Promise<Info> {
     const info = await this.get();
 
     return await this.infoRepo.save(Object.assign(info, data));

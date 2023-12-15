@@ -8,7 +8,7 @@ import {
 import { FastifyRequest } from "fastify";
 
 import { UsersService } from "src/users/users.service";
-import { checkSubscription } from "src/utils";
+import { checkSubscription } from "src/lib";
 import { GetUserDto, UserRowDto } from "src/users/dtos";
 import { AuthService } from "src/auth/auth.service";
 import { LoginUserDto } from "src/auth/dtos/login-user.dto";
@@ -21,7 +21,7 @@ export class ActiveUserGuard implements CanActivate {
       .switchToHttp()
       .getRequest();
 
-    let user = {} as UserRowDto;
+    let user: UserRowDto;
 
     if (request.body) {
       const { username, password } = request.body;

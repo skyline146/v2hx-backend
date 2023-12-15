@@ -64,10 +64,10 @@ export class UsersService {
   }
 
   async updateMany(data: User[]) {
-    await this.userRepo.save(data);
+    return await this.userRepo.save(data);
   }
 
-  async update(username: string, newData: Partial<User>) {
+  async update(username: string, newData: Partial<User>): Promise<User> {
     const user = await this.userRepo.findOneBy({ username });
 
     if (!user) {

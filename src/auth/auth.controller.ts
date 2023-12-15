@@ -24,7 +24,7 @@ import { TokenService } from "src/token/token.service";
 
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-import { getCookieOptions } from "src/utils";
+import { getCookieOptions } from "src/lib";
 
 @Controller("auth")
 export class AuthController {

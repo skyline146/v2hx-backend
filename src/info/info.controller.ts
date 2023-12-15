@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Inject, Patch, Res, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { FastifyReply } from "fastify";
@@ -34,9 +44,13 @@ export class InfoController {
   }
 
   @UseGuards(AdminGuard)
-  @Get("/logs")
-  async getLogs(@Res() res: FastifyReply) {
-    const file = createReadStream(join(process.cwd(), "src/logs.log"));
+  @Get("/logs/:date")
+  async getLogs(@Param("date") date: string, @Res() res: FastifyReply) {
+    const file = createReadStream(join(process.cwd(), `logs/${date}.log`));
+
+    file.on("error", () => {
+      res.code(404).send(JSON.stringify({ message: "File not found" }));
+    });
 
     res.headers({ "Content-Type": "text/plain" });
     res.send(file);
@@ -45,16 +59,17 @@ export class InfoController {
   @UseGuards(new ZodGuard("query", GetUserByHwidsDto), ActiveUserGuard)
   @Get("/offsets")
   async getOffsets() {
-    const year = new Date().getUTCFullYear();
-    const months = new Date().getUTCMonth();
-    const day = new Date().getUTCDate();
-    const hour = new Date().getUTCHours();
-    let minute = Math.floor(new Date().getUTCMinutes() / 5) * 5;
+    const currDate = new Date(),
+      year = currDate.getUTCFullYear(),
+      month = currDate.getUTCMonth(),
+      day = currDate.getUTCDate(),
+      hour = currDate.getUTCHours();
 
+    let minute = Math.floor(currDate.getUTCMinutes() / 5) * 5;
     if (minute === 0) minute = 1;
 
     function encrypt(value: number) {
-      return year * months * day * hour * minute * value;
+      return year * month * day * hour * minute * value;
     }
 
     // function decrypt(value: number) {
