@@ -11,7 +11,7 @@ export class User {
   username: string;
 
   @Column({ default: "" })
-  discord_username: string;
+  discord_id: string;
 
   // @Column("text", { array: true, default: [] })
   // usernames_history: string[];
@@ -39,6 +39,9 @@ export class User {
 
   @Column({ default: false })
   online: boolean;
+
+  // @Column({ default: "" })
+  // socket_id: string;
 
   @Column({ default: 0 })
   warn: number;

@@ -13,7 +13,7 @@ type FindOneOptions = {
 type FindAllOptions = {
   expire_date?: FindOperator<string>;
   username?: FindOperator<string>;
-  discord_username?: FindOperator<string>;
+  discord_id?: FindOperator<string>;
   online?: boolean;
 };
 

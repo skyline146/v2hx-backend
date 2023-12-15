@@ -65,7 +65,7 @@ export class UsersController {
     const pageN: number = page ? +page : 1;
 
     const searchQuery = search_value
-      ? [{ username: Like(`%${search_value}%`) }, { discord_username: Like(`%${search_value}%`) }]
+      ? [{ username: Like(`%${search_value}%`) }, { discord_id: Like(`%${search_value}%`) }]
       : { username: undefined };
 
     const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
@@ -177,20 +177,21 @@ export class UsersController {
   ) {
     const user = await this.usersService.findOne({ username: body.newUsername });
 
+    //if user exists throw an error
     if (user) {
       throw new BadRequestException("Username in use");
     }
 
-    const newUser = await this.usersService.update(req.user.username, {
+    const updatedUser = await this.usersService.update(req.user.username, {
       username: body.newUsername,
     });
 
-    const { accessToken, refreshToken } = this.tokenService.refresh(newUser);
+    const { access_token, refresh_token } = this.tokenService.refresh(updatedUser);
 
-    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken"));
-    res.setCookie("refreshToken", refreshToken, getCookieOptions("refreshToken"));
+    res.setCookie("access_token", access_token, getCookieOptions("access_token"));
+    res.setCookie("refresh_token", refresh_token, getCookieOptions("refresh_token"));
 
-    this.logger.info(`${req.user.username} changed username to: ${body.newUsername}.`);
+    this.logger.info(`${req.user.username} changed username to: ${updatedUser.username}.`);
 
     return "Username changed!";
   }

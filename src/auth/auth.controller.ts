@@ -92,14 +92,17 @@ export class AuthController {
       .send(file);
   }
 
+  // @Get("/dll")
+  // getDll() {}
+
   @UseGuards(LocalAuthGuard)
   @ZodSerializerDto(UserDto)
   @Post("/login-web")
   signIn(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
     const user = this.authService.signIn(req.user);
 
-    res.setCookie("accessToken", user.accessToken, getCookieOptions("accessToken"));
-    res.setCookie("refreshToken", user.refreshToken, getCookieOptions("refreshToken"));
+    res.setCookie("access_token", user.access_token, getCookieOptions("access_token"));
+    res.setCookie("refresh_token", user.refresh_token, getCookieOptions("refresh_token"));
 
     return user;
   }
@@ -114,9 +117,9 @@ export class AuthController {
   @UseGuards(RefreshJwtGuard)
   @Get("/refresh")
   refreshToken(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
-    const { accessToken } = this.tokenService.refresh(req.user);
+    const { access_token } = this.tokenService.refresh(req.user);
 
-    res.setCookie("accessToken", accessToken, getCookieOptions("accessToken"));
+    res.setCookie("access_token", access_token, getCookieOptions("access_token"));
 
     return { refreshed: true };
   }
@@ -124,8 +127,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get("/logout-web")
   logOut(@Res({ passthrough: true }) res: FastifyReply) {
-    res.clearCookie("accessToken", getCookieOptions("accessToken"));
-    res.clearCookie("refreshToken", getCookieOptions("refreshToken"));
+    res.clearCookie("access_token", getCookieOptions("access_token"));
+    res.clearCookie("refresh_token", getCookieOptions("refresh_token"));
 
     return { logged_out: true };
   }

@@ -26,8 +26,8 @@ export class TokenService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
-      refreshToken: this.jwtService.sign(payload, { expiresIn: "7d" }),
+      access_token: this.jwtService.sign(payload),
+      refresh_token: this.jwtService.sign(payload, { expiresIn: "7d" }),
     };
   }
 }

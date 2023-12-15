@@ -29,12 +29,12 @@ export class AuthService {
   }
 
   signIn(user: UserRowDto) {
-    const { accessToken, refreshToken } = this.tokenService.sign(user);
+    const { access_token, refresh_token } = this.tokenService.sign(user);
 
     return {
       ...user,
-      accessToken,
-      refreshToken,
+      access_token,
+      refresh_token,
     };
   }
 

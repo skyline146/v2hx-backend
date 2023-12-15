@@ -1,15 +1,15 @@
 import { CookieSerializeOptions } from "@fastify/cookie";
 
-type Cookies = "accessToken" | "refreshToken";
+type Cookies = "access_token" | "refresh_token";
 
 const cookiePeriods: Record<Cookies, number> = {
-  accessToken: 15 * 60 * 1000,
-  refreshToken: 7 * 24 * 60 * 60 * 1000,
+  access_token: 15 * 60 * 1000,
+  refresh_token: 7 * 24 * 60 * 60 * 1000,
 };
 
 const cookiePaths: Record<Cookies, string> = {
-  accessToken: "/api",
-  refreshToken: "/api/auth",
+  access_token: "/api",
+  refresh_token: "/api/auth/refresh",
 };
 
 export const getCookieOptions = (name: string): CookieSerializeOptions => {

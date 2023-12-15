@@ -5,7 +5,7 @@ import { z } from "nestjs-zod/z";
 const UserRowSchema = z
   .object({
     last_entry_date: z.string(),
-    discord_username: z.string(),
+    discord_id: z.string(),
     hdd: z.string(),
     last_hdd: z.string(),
     mac_address: z.string(),
