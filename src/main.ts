@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
+import { WsAdapter } from "@nestjs/platform-ws";
 import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 
@@ -11,6 +12,8 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ trustProxy: true, ignoreTrailingSlash: true })
   );
+
+  app.useWebSocketAdapter(new WsAdapter(app));
 
   const configService = app.get(ConfigService);
 
