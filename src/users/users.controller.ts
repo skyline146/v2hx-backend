@@ -151,12 +151,6 @@ export class UsersController {
     return await this.usersService.remove(username);
   }
 
-  @Public()
-  @Get("/:username/is-playing")
-  async getUserOnlineStatus(@Param("username") username: string) {
-    return this.usersService.findOne({ username });
-  }
-
   @UseGuards(AdminGuard)
   @Post("/:username/reset-password")
   async resetPassword(@Param("username") username: string) {
@@ -198,11 +192,11 @@ export class UsersController {
 
   @Post("/change-password")
   async changePassword(@Request() req: FastifyRequest, @Body() body: ChangeUserDto) {
-    await this.authService.validateUser(req.user.username, body.password);
+    const user = await this.authService.validateUser(req.user.username, body.password);
 
     const newHashedPassword = await getHashedPassword(body.newPassword);
 
-    await this.usersService.update(req.user.username, { password: newHashedPassword });
+    await this.usersService.update(user.username, { password: newHashedPassword });
 
     return "Password changed!";
   }

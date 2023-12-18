@@ -1,14 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Param,
-  Patch,
-  Res,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Patch, Res, UseGuards } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { FastifyReply } from "fastify";
@@ -65,11 +55,8 @@ export class InfoController {
       day = currDate.getUTCDate(),
       hour = currDate.getUTCHours();
 
-    let minute = Math.floor(currDate.getUTCMinutes() / 5) * 5;
-    if (minute === 0) minute = 1;
-
     function encrypt(value: number) {
-      return year * month * day * hour * minute * value;
+      return year * month * day * hour * value;
     }
 
     // function decrypt(value: number) {
@@ -89,9 +76,9 @@ export class InfoController {
     }
 
     const cachedOffsets = await this.cacheManager.get<Offsets>("offsets");
-    const cachedMinute = await this.cacheManager.get<number>("minute");
+    const cachedHour = await this.cacheManager.get<number>("hour");
 
-    if (!cachedOffsets || cachedMinute !== minute) {
+    if (!cachedOffsets || cachedHour !== hour) {
       const offsets: Offsets = JSON.parse(
         readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
       );
@@ -99,7 +86,7 @@ export class InfoController {
       const encryptedOffsets = transformOffsets(offsets, encrypt);
 
       await this.cacheManager.set("offsets", encryptedOffsets, 0);
-      await this.cacheManager.set("minute", minute, 0);
+      await this.cacheManager.set("hour", hour, 0);
 
       return encryptedOffsets;
     }
