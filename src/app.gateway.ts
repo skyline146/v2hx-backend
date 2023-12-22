@@ -95,6 +95,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.logger.warn(`User ${username} tried to connect while session is active. Ban: true`);
 
       client.close(1011, "Session is active already");
+      // const currClient = this.clients.get(username);
+      // currClient.close(1011, "Session is active already");
+      // this.clients.delete(username);
       return;
     }
 

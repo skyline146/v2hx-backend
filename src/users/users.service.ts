@@ -2,13 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { Repository, FindOperator } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
+import { UserRowDto } from "./dtos";
 import { User } from "../entities/user.entity";
-
-type FindOneOptions = {
-  username?: string;
-  hdd?: string;
-  mac_address?: string;
-};
 
 type FindAllOptions = {
   expire_date?: FindOperator<string>;
@@ -30,7 +25,7 @@ export class UsersService {
     await this.userRepo.save(user);
   }
 
-  async findOne(options: FindOneOptions) {
+  async findOne(options: Partial<UserRowDto>) {
     return await this.userRepo.findOne({ where: options });
   }
 

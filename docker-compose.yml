@@ -16,10 +16,26 @@ services:
     ports:
       - "5432:5432"
 
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: v2hx.backend.dev
+    ports:
+      - "3000:7142"
+    depends_on:
+      - db
+    volumes:
+      - ./src:/backend/src
+      - ./resources:/backend/resources
+      - ./logs:/backend/logs
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production
     container_name: v2hx.backend
     restart: always
     ports:

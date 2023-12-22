@@ -24,7 +24,7 @@ import { TokenService } from "src/token/token.service";
 
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-import { getCookieOptions } from "src/lib";
+import { getCookieOptions, parseHwid } from "src/lib";
 
 @Controller("auth")
 export class AuthController {
@@ -43,7 +43,10 @@ export class AuthController {
     @Request() req: FastifyRequest,
     @Res() res: FastifyReply
   ) {
-    const { hwid1: hdd, hwid2: mac_address } = body;
+    const { a, b } = body;
+
+    const hdd = parseHwid(a);
+    const mac_address = parseHwid(b);
 
     const user = req.user;
 
@@ -86,8 +89,7 @@ export class AuthController {
 
     res
       .headers({
-        "Content-Type": "application/x-msdownload",
-        "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
+        "Content-Disposition": 'attachment; filename="response"',
       })
       .send(file);
   }
@@ -115,21 +117,21 @@ export class AuthController {
   }
 
   @UseGuards(RefreshJwtGuard)
-  @Get("/refresh")
+  @Post("/refresh")
   refreshToken(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
     const { access_token } = this.tokenService.refresh(req.user);
 
     res.setCookie("access_token", access_token, getCookieOptions("access_token"));
 
-    return { refreshed: true };
+    return { access_token };
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get("/logout-web")
-  logOut(@Res({ passthrough: true }) res: FastifyReply) {
+  @Post("/logout-web")
+  logOut(@Res() res: FastifyReply) {
     res.clearCookie("access_token", getCookieOptions("access_token"));
     res.clearCookie("refresh_token", getCookieOptions("refresh_token"));
 
-    return { logged_out: true };
+    res.code(204).send();
   }
 }

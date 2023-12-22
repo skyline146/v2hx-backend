@@ -28,7 +28,7 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
 import { TokenService } from "src/token/token.service";
-import { checkSubscription, getCookieOptions, getHashedPassword } from "src/lib";
+import { checkSubscription, getCookieOptions, getHashedPassword, parseHwid } from "src/lib";
 
 import {
   ChangeUserDto,
@@ -107,8 +107,19 @@ export class UsersController {
 
   @Public()
   @Get("/get-by-hwids")
-  async getUserByHwids(@Query() query: GetUserByHwidsDto): Promise<GetUserByHwidsResponse> {
-    const { hwid1: hdd, hwid2: mac_address } = query;
+  async getUserByHwids(
+    @Request() req: FastifyRequest<{ Headers: GetUserByHwidsDto }>
+  ): Promise<GetUserByHwidsResponse> {
+    const { a, b } = req.headers;
+
+    let hdd: string, mac_address: string;
+
+    try {
+      hdd = parseHwid(JSON.parse(a));
+      mac_address = parseHwid(JSON.parse(b));
+    } catch {
+      throw new BadRequestException();
+    }
 
     const user = await this.usersService.findOne({ hdd, mac_address });
 

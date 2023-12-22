@@ -8,6 +8,7 @@ import { join } from "path";
 
 import { InfoService } from "./info.service";
 import { AdminGuard, ActiveUserGuard } from "src/guards";
+import { getCurrentDate } from "src/lib";
 
 import { InfoDto } from "./dtos/info.dto";
 import { Offsets } from "./types";
@@ -32,17 +33,6 @@ export class InfoController {
     return this.infoService.update(body);
   }
 
-  @Get("/file")
-  get(@Res() res: FastifyReply) {
-    const file = createReadStream(join(process.cwd(), `resources/data.json`));
-
-    res.headers({
-      "Content-Type": "application/json",
-      // "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
-    });
-    res.send(file);
-  }
-
   @UseGuards(AdminGuard)
   @Get("/logs/:date")
   async getLogs(@Param("date") date: string, @Res() res: FastifyReply) {
@@ -59,11 +49,7 @@ export class InfoController {
   @UseGuards(ActiveUserGuard)
   @Get("/offsets")
   async getOffsets() {
-    const currDate = new Date(),
-      year = currDate.getUTCFullYear(),
-      month = currDate.getUTCMonth(),
-      day = currDate.getUTCDate(),
-      hour = currDate.getUTCHours();
+    const { year, month, day, hour } = getCurrentDate();
 
     function encrypt(value: number) {
       return year * month * day * hour * value;
