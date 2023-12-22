@@ -81,6 +81,8 @@ export class AuthController {
     //validation passed, return dll
     this.usersService.update(user.username, {
       last_entry_date: new Date().toISOString(),
+      last_hdd: hdd,
+      last_mac_address: mac_address,
     });
 
     // this.logger.info(`User ${user.username} successfully logged in loader.`);
