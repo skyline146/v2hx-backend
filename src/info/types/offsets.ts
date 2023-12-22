@@ -1,1 +1,1 @@
-export type Offsets = Record<string, Record<string, number>>;
+export type Offsets = Record<string, number>;
