@@ -2,7 +2,7 @@ import { Body, Controller, Get, Inject, Param, Patch, Res, UseGuards } from "@ne
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { FastifyReply } from "fastify";
-import { ZodGuard, ZodSerializerDto } from "nestjs-zod";
+import { ZodSerializerDto } from "nestjs-zod";
 import { createReadStream, readFileSync } from "fs";
 import { join } from "path";
 
@@ -11,7 +11,6 @@ import { AdminGuard, ActiveUserGuard } from "src/guards";
 
 import { InfoDto } from "./dtos/info.dto";
 import { Offsets } from "./types";
-import { GetUserByHwidsDto } from "src/users/dtos";
 
 @Controller("info")
 export class InfoController {
@@ -33,6 +32,17 @@ export class InfoController {
     return this.infoService.update(body);
   }
 
+  @Get("/file")
+  get(@Res() res: FastifyReply) {
+    const file = createReadStream(join(process.cwd(), `resources/data.json`));
+
+    res.headers({
+      "Content-Type": "application/json",
+      // "Content-Disposition": 'attachment; filename="SoT-DLC-v3.dll"',
+    });
+    res.send(file);
+  }
+
   @UseGuards(AdminGuard)
   @Get("/logs/:date")
   async getLogs(@Param("date") date: string, @Res() res: FastifyReply) {
@@ -46,7 +56,7 @@ export class InfoController {
     res.send(file);
   }
 
-  @UseGuards(new ZodGuard("query", GetUserByHwidsDto), ActiveUserGuard)
+  @UseGuards(ActiveUserGuard)
   @Get("/offsets")
   async getOffsets() {
     const currDate = new Date(),
@@ -63,13 +73,10 @@ export class InfoController {
     //   return value / (year * months * day * hour * minute * 555);
     // }
 
-    function transformOffsets(json: Offsets, method: (value: number) => number) {
+    function transformOffsets(json: Offsets, method: typeof encrypt) {
       const newOffsets: Offsets = {};
-      Object.keys(json).map((struct) => {
-        newOffsets[struct] = {};
-        Object.keys(json[struct]).map((offset) => {
-          newOffsets[struct][offset] = method(json[struct][offset]);
-        });
+      Object.keys(json).map((offset) => {
+        newOffsets[offset] = method(json[offset]);
       });
 
       return newOffsets;
