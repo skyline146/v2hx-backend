@@ -100,7 +100,7 @@ export class UsersController {
 
     await this.usersService.updateMany(users);
 
-    // this.logger.info("Added 1 free day.");
+    this.logger.info("Added 1 free day to all active users.");
 
     return true;
   }
@@ -144,7 +144,7 @@ export class UsersController {
       }
     });
 
-    this.logger.info(`Admin changed ${username}: ${JSON.stringify(changesObject, null, "\t")}`);
+    this.logger.info(`Changed ${username}: ${JSON.stringify(changesObject, null, "\t")}`);
 
     await this.usersService.update(username, body);
   }

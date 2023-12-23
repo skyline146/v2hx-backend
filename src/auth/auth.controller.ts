@@ -55,27 +55,24 @@ export class AuthController {
       await this.usersService.update(user.username, {
         hdd,
         mac_address,
+      });
+    } //check hwids validity on next logins
+    else if (hdd !== user.hdd || mac_address !== user.mac_address) {
+      this.usersService.update(user.username, {
         last_hdd: hdd,
         last_mac_address: mac_address,
+        last_entry_date: new Date().toISOString(),
+        ban: true,
+        warn: user.warn + 1,
       });
-    } //next logins
-    else {
-      //check hwids validity
-      if (hdd !== user.hdd || mac_address !== user.mac_address) {
-        this.usersService.update(user.username, {
-          last_hdd: hdd,
-          last_mac_address: mac_address,
-          last_entry_date: new Date().toISOString(),
-          ban: true,
-          warn: user.warn + 1,
-        });
 
-        this.logger.warn(
-          `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}`
-        );
+      this.logger.warn(
+        `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}
+         Stored hwids: ${user.hdd} // ${user.mac_address}
+         Login hwids: ${hdd} // ${mac_address}`
+      );
 
-        throw new UnauthorizedException("Hwid does not match");
-      }
+      throw new UnauthorizedException("Hwid does not match");
     }
 
     //validation passed, return dll
@@ -121,9 +118,10 @@ export class AuthController {
   @UseGuards(RefreshJwtGuard)
   @Post("/refresh")
   refreshToken(@Request() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
-    const { access_token } = this.tokenService.refresh(req.user);
+    const { access_token, refresh_token } = this.tokenService.refresh(req.user);
 
     res.setCookie("access_token", access_token, getCookieOptions("access_token"));
+    res.setCookie("refresh_token", refresh_token, getCookieOptions("refresh_token"));
 
     return { access_token };
   }
