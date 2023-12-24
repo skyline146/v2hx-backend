@@ -36,11 +36,11 @@ export class ActiveUserGuard implements CanActivate {
       try {
         hdd = parseHwid(JSON.parse(a));
         mac_address = parseHwid(JSON.parse(b));
-      } catch {
+
+        user = await this.usersService.findOne({ hdd, mac_address });
+      } catch (err) {
         throw new BadRequestException();
       }
-
-      user = await this.usersService.findOne({ hdd, mac_address });
 
       //check if user exists
       if (!user) {

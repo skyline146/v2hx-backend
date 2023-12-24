@@ -8,6 +8,7 @@ import {
   Request,
   UseGuards,
   Inject,
+  BadRequestException,
 } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
@@ -47,6 +48,12 @@ export class AuthController {
 
     const hdd = parseHwid(a);
     const mac_address = parseHwid(b);
+
+    try {
+      await this.usersService.findOne({ hdd, mac_address });
+    } catch (err) {
+      throw new BadRequestException();
+    }
 
     const user = req.user;
 
