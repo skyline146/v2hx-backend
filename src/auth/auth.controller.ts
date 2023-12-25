@@ -62,6 +62,7 @@ export class AuthController {
       await this.usersService.update(user.username, {
         hdd,
         mac_address,
+        ip: req.ip,
       });
     } //check hwids validity on next logins
     else if (hdd !== user.hdd || mac_address !== user.mac_address) {
@@ -69,6 +70,7 @@ export class AuthController {
         last_hdd: hdd,
         last_mac_address: mac_address,
         last_entry_date: new Date().toISOString(),
+        last_ip: req.ip,
         ban: true,
         warn: user.warn + 1,
       });
@@ -76,7 +78,9 @@ export class AuthController {
       this.logger.warn(
         `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}
          Stored hwids: ${user.hdd} // ${user.mac_address}
-         Login hwids: ${hdd} // ${mac_address}`
+         Login hwids: ${hdd} // ${mac_address}
+         Stored IP: ${user.ip}
+         Login IP: ${req.ip}`
       );
 
       throw new UnauthorizedException("Hwid does not match");
@@ -85,11 +89,12 @@ export class AuthController {
     //validation passed, return dll
     this.usersService.update(user.username, {
       last_entry_date: new Date().toISOString(),
+      last_ip: req.ip,
       last_hdd: hdd,
       last_mac_address: mac_address,
     });
 
-    // this.logger.info(`User ${user.username} successfully logged in loader.`);
+    this.logger.info(`User ${user.username} logged in loader. IP: ${req.ip}`);
 
     const file = createReadStream(join(process.cwd(), "resources/SoT-DLC-v3.dll"));
 
@@ -99,9 +104,6 @@ export class AuthController {
       })
       .send(file);
   }
-
-  // @Get("/dll")
-  // getDll() {}
 
   @UseGuards(LocalAuthGuard)
   @ZodSerializerDto(UserDto)

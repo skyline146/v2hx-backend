@@ -37,6 +37,12 @@ export class User {
   @Column({ default: "" })
   last_entry_date: string;
 
+  @Column({ default: "" })
+  ip: string;
+
+  @Column({ default: "" })
+  last_ip: string;
+
   @Column({ default: false })
   online: boolean;
 

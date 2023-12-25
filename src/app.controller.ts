@@ -1,9 +1,11 @@
-import { Controller, Get, Res } from "@nestjs/common";
+import { Controller, Get, Res, UseGuards } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
 import { FastifyReply } from "fastify";
 
 import { AppService } from "./app.service";
+import { JwtAuthGuard } from "./auth/guards";
+import { ActiveUserGuard } from "./guards";
 
 @Controller()
 export class AppController {
@@ -14,6 +16,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @UseGuards(JwtAuthGuard, ActiveUserGuard)
   @Get("/loader")
   getLoader(@Res() res: FastifyReply) {
     const file = createReadStream(join(process.cwd(), "resources/V2HX.exe"));

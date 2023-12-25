@@ -31,7 +31,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException("Invalid token");
     }
 
-    request.user = { admin: user.admin, username: user.username };
+    request.user = user;
 
     return true;
   }

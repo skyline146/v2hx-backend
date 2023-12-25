@@ -28,6 +28,8 @@ export class ActiveUserGuard implements CanActivate {
       const { username, password } = request.body;
 
       user = await this.authService.validateUser(username, password);
+    } else if (request.user) {
+      user = await this.usersService.findOne({ username: request.user.username });
     } else {
       const { a, b } = request.headers;
 
@@ -41,11 +43,11 @@ export class ActiveUserGuard implements CanActivate {
       } catch (err) {
         throw new BadRequestException();
       }
+    }
 
-      //check if user exists
-      if (!user) {
-        throw new NotFoundException("User not found");
-      }
+    //check if user exists
+    if (!user) {
+      throw new NotFoundException("User not found");
     }
 
     //check if account is banned
@@ -59,7 +61,7 @@ export class ActiveUserGuard implements CanActivate {
 
     //check on active subscription
     if (!checkSubscription(user.expire_date)) {
-      throw new UnauthorizedException("You dont have active subscription");
+      throw new UnauthorizedException("You don`t have active subscription");
     }
 
     request.user = user;

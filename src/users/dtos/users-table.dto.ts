@@ -10,6 +10,8 @@ const UserRowSchema = z
     last_hdd: z.string(),
     mac_address: z.string(),
     last_mac_address: z.string(),
+    ip: z.string(),
+    last_ip: z.string(),
     warn: z.number(),
     ban: z.boolean(),
     online: z.boolean(),

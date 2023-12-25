@@ -61,6 +61,7 @@ export class InfoController {
 
     function transformOffsets(json: Offsets, method: typeof encrypt) {
       const newOffsets: Offsets = {};
+      newOffsets["key"] = encrypt(Math.floor(Math.random() * (999999 - 142567 + 1)) + 142567);
       Object.keys(json).map((offset) => {
         newOffsets[offset] = method(json[offset]);
       });
