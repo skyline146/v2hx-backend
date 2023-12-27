@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Inject, Param, Patch, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Patch, Res, Req, UseGuards } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
-import { FastifyReply } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { ZodSerializerDto } from "nestjs-zod";
+import { WINSTON_MODULE_PROVIDER } from "nest-winston";
+import { Logger } from "winston";
 import { createReadStream, readFileSync } from "fs";
 import { join } from "path";
 
@@ -17,7 +19,8 @@ import { Offsets } from "./types";
 export class InfoController {
   constructor(
     private infoService: InfoService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
   @Get("")
@@ -48,7 +51,7 @@ export class InfoController {
 
   @UseGuards(ActiveUserGuard)
   @Get("/offsets")
-  async getOffsets() {
+  async getOffsets(@Req() req: FastifyRequest) {
     const { year, month, day, hour } = getCurrentDate();
 
     function encrypt(value: number) {
@@ -71,6 +74,8 @@ export class InfoController {
 
     const cachedOffsets = await this.cacheManager.get<Offsets>("offsets");
     const cachedHour = await this.cacheManager.get<number>("hour");
+
+    this.logger.info(`User ${req.user.username} received offsets.`);
 
     if (!cachedOffsets || cachedHour !== hour) {
       const offsets: Offsets = JSON.parse(

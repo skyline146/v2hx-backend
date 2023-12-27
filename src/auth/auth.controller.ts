@@ -58,7 +58,7 @@ export class AuthController {
     const user = req.user;
 
     //first login
-    if (!user.hdd) {
+    if (!user.hdd || !user.mac_address) {
       await this.usersService.update(user.username, {
         hdd,
         mac_address,

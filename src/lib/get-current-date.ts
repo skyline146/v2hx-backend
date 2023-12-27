@@ -3,7 +3,7 @@ export const getCurrentDate = () => {
     year = currDate.getUTCFullYear(),
     month = currDate.getUTCMonth() + 1,
     day = currDate.getUTCDate(),
-    hour = currDate.getUTCHours();
+    hour = currDate.getUTCHours() === 0 ? 24 : currDate.getUTCHours();
 
   return { year, month, day, hour };
 };

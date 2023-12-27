@@ -9,7 +9,7 @@ const cookiePeriods: Record<Cookies, number> = {
 
 const cookiePaths: Record<Cookies, string> = {
   access_token: "/api",
-  refresh_token: "/api/auth",
+  refresh_token: "/api/auth/refresh",
 };
 
 export const getCookieOptions = (name: string): CookieSerializeOptions => {

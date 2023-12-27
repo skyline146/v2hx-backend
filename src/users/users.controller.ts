@@ -114,14 +114,16 @@ export class UsersController {
 
     let hdd: string, mac_address: string;
 
+    let user: UserRowDto;
+
     try {
       hdd = parseHwid(JSON.parse(a));
       mac_address = parseHwid(JSON.parse(b));
+
+      user = await this.usersService.findOne({ hdd, mac_address });
     } catch {
       throw new BadRequestException();
     }
-
-    const user = await this.usersService.findOne({ hdd, mac_address });
 
     if (!user) {
       throw new NotFoundException("User not found");
