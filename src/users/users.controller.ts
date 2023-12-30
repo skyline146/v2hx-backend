@@ -16,7 +16,7 @@ import {
 } from "@nestjs/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { randomBytes } from "crypto";
-import { Not, And, Like } from "typeorm";
+import { Not, And, Like, ILike } from "typeorm";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { ZodSerializerDto } from "nestjs-zod";
@@ -65,7 +65,7 @@ export class UsersController {
     const pageN: number = page ? +page : 1;
 
     const searchQuery = search_value
-      ? [{ username: Like(`%${search_value}%`) }, { discord_id: Like(`%${search_value}%`) }]
+      ? [{ username: ILike(`%${search_value}%`) }, { discord_id: Like(`%${search_value}%`) }]
       : { username: undefined };
 
     const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
