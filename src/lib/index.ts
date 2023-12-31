@@ -3,3 +3,5 @@ export * from "./get-hashed-password";
 export * from "./get-cookie-options";
 export * from "./parse-hwid";
 export * from "./get-current-date";
+export * from "./log-to-discord";
+export * from "./invalid-hwids-log-layout";

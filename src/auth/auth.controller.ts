@@ -25,7 +25,7 @@ import { TokenService } from "src/token/token.service";
 
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-import { getCookieOptions, parseHwid } from "src/lib";
+import { getCookieOptions, parseHwid, logToDiscord, invalidHwidsLog } from "src/lib";
 
 @Controller("auth")
 export class AuthController {
@@ -66,24 +66,34 @@ export class AuthController {
       });
     } //check hwids validity on next logins
     else if (hdd !== user.hdd || mac_address !== user.mac_address) {
+      //update user's last hwids, adding warn
       this.usersService.update(user.username, {
         last_hdd: hdd,
         last_mac_address: mac_address,
         last_entry_date: new Date().toISOString(),
         last_ip: req.ip,
-        ban: true,
         warn: user.warn + 1,
       });
 
-      this.logger.warn(
-        `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}
-         Stored hwids: ${user.hdd} // ${user.mac_address}
-         Login hwids: ${hdd} // ${mac_address}
-         Stored IP: ${user.ip}
-         Login IP: ${req.ip}`
-      );
+      //check if 2 hwids are invalid
+      if (hdd !== user.hdd && mac_address !== user.mac_address) {
+        //adding ban
+        this.usersService.update(user.username, {
+          ban: true,
+        });
 
-      throw new UnauthorizedException("Hwid does not match");
+        logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15548997);
+
+        this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
+
+        throw new UnauthorizedException("Computer does not match with initial account");
+      }
+
+      //one of 2 hwids is invalid
+
+      logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15105570);
+
+      this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
     }
 
     //validation passed, return dll
