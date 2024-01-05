@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
-import { Length } from "class-validator";
 
 @Entity()
 export class User {
@@ -7,7 +6,6 @@ export class User {
   id: string;
 
   @Column({ unique: true })
-  @Length(3, 50)
   username: string;
 
   @Column({ default: "" })

@@ -75,6 +75,8 @@ export class AuthController {
         warn: user.warn + 1,
       });
 
+      this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
+
       //check if 2 hwids are invalid
       if (hdd !== user.hdd && mac_address !== user.mac_address) {
         //adding ban
@@ -82,18 +84,14 @@ export class AuthController {
           ban: true,
         });
 
+        //log to discord with red level
         logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15548997);
-
-        this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
 
         throw new UnauthorizedException("Computer does not match with initial account");
       }
 
-      //one of 2 hwids is invalid
-
+      //pass if one of 2 hwids is invalid, log to discord with orange level
       logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15105570);
-
-      this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
     }
 
     //validation passed, return dll
