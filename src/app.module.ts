@@ -21,6 +21,7 @@ import { AppService } from "./app.service";
 import typeorm from "./config/typeorm";
 import { FastifyThrottlerGuard } from "./guards/throttler.guard";
 import { AppGateway } from "./app.gateway";
+import { PlayerlistModule } from "./playerlist/playerlist.module";
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { AppGateway } from "./app.gateway";
     InfoModule,
     AuthModule,
     TokenModule,
+    PlayerlistModule,
   ],
   controllers: [AppController],
   providers: [

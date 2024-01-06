@@ -2,7 +2,6 @@ import { Controller, Get, Res } from "@nestjs/common";
 import { createReadStream } from "fs";
 import { join } from "path";
 import { FastifyReply } from "fastify";
-import { authenticate } from "@xboxreplay/xboxlive-auth";
 
 import { AppService } from "./app.service";
 
@@ -25,15 +24,5 @@ export class AppController {
     });
 
     res.send(file);
-  }
-
-  @Get("/xbox-api-test")
-  async test() {
-    //t
-    const userData = await authenticate("test@v2hx.pro", "admin36786921397");
-
-    console.log(userData);
-
-    return userData;
   }
 }
