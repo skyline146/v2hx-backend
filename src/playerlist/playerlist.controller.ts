@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
 import { FastifyRequest } from "fastify";
 import { UseZodGuard } from "nestjs-zod";
 
@@ -14,9 +14,16 @@ export class PlayerlistController {
   @UseZodGuard("body", GetPlayersByXUIDsDto)
   @Post("")
   async getPlayers(@Request() req: FastifyRequest, @Body() body: GetPlayersByXUIDsDto) {
-    return await this.playerlistService.getPlayersByXUIDs(body.xuids, {
-      userHash: req.xbox_api.userHash,
-      XSTSToken: req.xbox_api.XSTSToken,
+    const players = await this.playerlistService.getPlayersByXUIDs(body.xuids, {
+      user_hash: req.xbox_user.user_hash,
+      xsts_token: req.xbox_user.xsts_token,
     });
+
+    return players;
+  }
+
+  @Get("/token")
+  async getToken(@Request() req: FastifyRequest) {
+    return req.xbox_user;
   }
 }

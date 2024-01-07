@@ -16,8 +16,8 @@ export class XboxApiGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: FastifyRequest = context.switchToHttp().getRequest();
 
-    let userHash = await this.cacheManager.get<string>("userHash");
-    let XSTSToken = await this.cacheManager.get<string>("XSTSToken");
+    let user_hash = await this.cacheManager.get<string>("user_hash");
+    let xsts_token = await this.cacheManager.get<string>("xsts_token");
     let expires_on = await this.cacheManager.get<string>("expires_on");
 
     if (!expires_on) {
@@ -27,12 +27,12 @@ export class XboxApiGuard implements CanActivate {
           process.env.XBOX_PASSWORD
         )) as XboxUserData;
 
-        userHash = userData.user_hash;
-        XSTSToken = userData.xsts_token;
+        user_hash = userData.user_hash;
+        xsts_token = userData.xsts_token;
         expires_on = userData.expires_on;
 
-        await this.cacheManager.set("userHash", userHash, 0);
-        await this.cacheManager.set("XSTSToken", XSTSToken, 0);
+        await this.cacheManager.set("user_hash", user_hash, 0);
+        await this.cacheManager.set("xsts_token", xsts_token, 0);
         await this.cacheManager.set(
           "expires_on",
           expires_on,
@@ -43,7 +43,7 @@ export class XboxApiGuard implements CanActivate {
       }
     }
 
-    request.xbox_api = { userHash, XSTSToken };
+    request.xbox_user = { user_hash, xsts_token };
 
     return true;
   }

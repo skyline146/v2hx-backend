@@ -4,9 +4,9 @@ import { UserRowDto } from "./users/dtos";
 declare module "fastify" {
   interface FastifyRequest extends Request {
     user: UserRowDto;
-    xbox_api: {
-      userHash: string;
-      XSTSToken: string;
+    xbox_user: {
+      user_hash: string;
+      xsts_token: string;
     };
   }
 }
