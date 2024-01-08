@@ -30,7 +30,7 @@ export class ActiveUserGuard implements CanActivate {
       const { username, password } = request.body;
 
       user = await this.authService.validateUser(username, password);
-    } else if (request.headers["a"] && request.headers["b"]) {
+    } else if (request.headers["a"]) {
       //if headers with hwids presented in request, validate by decipher function
       // a - hdd, b - for another hwid (change mac_address)
       const { a } = request.headers;

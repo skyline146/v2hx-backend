@@ -19,7 +19,7 @@ import { randomBytes } from "crypto";
 import { Not, And, Like, ILike } from "typeorm";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
-import { ZodSerializerDto } from "nestjs-zod";
+import { UseZodGuard, ZodSerializerDto } from "nestjs-zod";
 
 import { UsersService } from "./users.service";
 import { AuthService } from "../auth/auth.service";
@@ -31,7 +31,8 @@ import { TokenService } from "src/token/token.service";
 import { checkSubscription, getCookieOptions, getHashedPassword, parseHwid } from "src/lib";
 
 import {
-  ChangeUserDto,
+  ChangePasswordDto,
+  ChangeUsernameDto,
   UsersTableDto,
   UserRowDto,
   GetUsersQueryDto,
@@ -110,17 +111,17 @@ export class UsersController {
   async getUserByHwids(
     @Request() req: FastifyRequest<{ Headers: GetUserByHwidsDto }>
   ): Promise<GetUserByHwidsResponse> {
-    const { a, b } = req.headers;
+    const { a } = req.headers;
 
-    let hdd: string, mac_address: string;
+    let hdd: string;
 
     let user: UserRowDto;
 
     try {
       hdd = parseHwid(JSON.parse(a));
-      mac_address = parseHwid(JSON.parse(b));
+      // mac_address = parseHwid(JSON.parse(b));
 
-      user = await this.usersService.findOne({ hdd, mac_address });
+      user = await this.usersService.findOne({ hdd });
     } catch {
       throw new BadRequestException();
     }
@@ -176,10 +177,11 @@ export class UsersController {
     return { password: newPassword };
   }
 
+  @UseZodGuard("body", ChangeUsernameDto)
   @Post("/change-username")
   async changeUsername(
     @Request() req: FastifyRequest,
-    @Body() body: ChangeUserDto,
+    @Body() body: ChangeUsernameDto,
     @Res({ passthrough: true }) res: FastifyReply
   ) {
     const user = await this.usersService.findOne({ username: body.newUsername });
@@ -203,8 +205,9 @@ export class UsersController {
     return "Username changed!";
   }
 
+  @UseZodGuard("body", ChangePasswordDto)
   @Post("/change-password")
-  async changePassword(@Request() req: FastifyRequest, @Body() body: ChangeUserDto) {
+  async changePassword(@Request() req: FastifyRequest, @Body() body: ChangePasswordDto) {
     const user = await this.authService.validateUser(req.user.username, body.password);
 
     const newHashedPassword = await getHashedPassword(body.newPassword);
