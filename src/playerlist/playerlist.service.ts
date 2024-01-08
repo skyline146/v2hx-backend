@@ -1,42 +1,40 @@
 import { HttpException, Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { FindOperator, Repository } from "typeorm";
 import { HTTPMethods } from "fastify";
 import axios from "axios";
 
-interface XboxUser {
-  id: string;
-  settings: { id: string; value: string }[];
-}
+import { Playerlist } from "src/entities";
 
-interface XboxGetUsersByXuidsBody {
-  userIds: string[];
-  settings: string[];
-}
+import { isXUID } from "src/lib";
+import { XboxAuth, XboxGetUsersByXuids, XboxGetUsersByXuidsBody } from "./types";
+import { PlayerDto } from "./dtos";
 
-interface XboxGetUsersByXuids {
-  profileUsers: XboxUser[];
-}
+type Player = Omit<Playerlist, "id" | "added_by">;
 
-interface XboxAuth {
-  user_hash: string;
-  xsts_token: string;
-}
-// "Mozilla/5.0 (XboxReplay; XboxLiveAPI/3.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
+type FindAllOptions = {
+  xuid?: FindOperator<string>;
+  gamertag?: FindOperator<string>;
+};
 
 @Injectable()
 export class PlayerlistService {
+  constructor(@InjectRepository(Playerlist) private playerlistRepo: Repository<Playerlist>) {}
+
   private xboxApi = axios.create({
     headers: {
-      // Accept: "application/json",
-      // "Accept-Encoding": "gzip",
-      // "Accept-Language": "en-US",
-      // "User-Agent": "XboxServicesAPI/2020.02.0.0 cpp",
       "X-XBL-Contract-Version": 2,
       "Content-Type": "application/json",
     },
     baseURL: "https://profile.xboxlive.com/",
   });
 
-  async xboxApiRequest<R, D>(url: string, method: HTTPMethods, authorization: XboxAuth, data?: D) {
+  private async xboxApiRequest<R, D = undefined>(
+    url: string,
+    method: HTTPMethods,
+    authorization: XboxAuth,
+    data?: D
+  ) {
     try {
       const response = await this.xboxApi.request<R>({
         url,
@@ -56,7 +54,7 @@ export class PlayerlistService {
     }
   }
 
-  async getPlayersByXUIDs(xuids: string[], authorization: XboxAuth): Promise<string[]> {
+  async getPlayersByXUIDs(xuids: string[], authorization: XboxAuth): Promise<any> {
     const data = await this.xboxApiRequest<XboxGetUsersByXuids, XboxGetUsersByXuidsBody>(
       "users/batch/profile/settings",
       "POST",
@@ -68,5 +66,64 @@ export class PlayerlistService {
     );
 
     return data.profileUsers.map((user) => user.settings[0].value);
+  }
+
+  async getMatchedPlayers(options: { xuid: string }[]) {
+    return await this.playerlistRepo.find({ where: options });
+  }
+
+  async getPlayerType(xuid: string) {
+    return await this.playerlistRepo.findOne({ where: { xuid } });
+  }
+
+  async checkPlayer(xuidOrGamertag: string, authorization: XboxAuth) {
+    const data = await this.xboxApiRequest<XboxGetUsersByXuids>(
+      `users/${isXUID(xuidOrGamertag)}/profile/settings?settings=Gamertag`,
+      "GET",
+      authorization
+    );
+    const user = data.profileUsers[0];
+
+    return {
+      xuid: user.id,
+      gamertag: user.settings[0].value,
+    };
+  }
+
+  async create(player: Player, added_by: string) {
+    const playerToAdd = this.playerlistRepo.create({
+      ...player,
+      added_by,
+    });
+    await this.playerlistRepo.save(playerToAdd);
+  }
+
+  async update(id: string, newData: PlayerDto) {
+    const player = await this.playerlistRepo.findOneBy({ id });
+
+    return await this.playerlistRepo.save(Object.assign(player, newData));
+  }
+
+  async remove(id: string) {
+    const playerToRemove = await this.playerlistRepo.findOneBy({ id });
+
+    if (!playerToRemove) {
+      return null;
+    }
+
+    return await this.playerlistRepo.remove(playerToRemove);
+  }
+
+  async findAll(options: FindAllOptions | FindAllOptions[]) {
+    return await this.playerlistRepo.findAndCount({
+      where: options,
+      order: {
+        gamertag: "ASC",
+      },
+    });
+  }
+
+  async findOne(options: Partial<PlayerDto>) {
+    return await this.playerlistRepo.findOne({ where: options });
   }
 }

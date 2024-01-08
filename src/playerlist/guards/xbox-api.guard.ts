@@ -4,11 +4,7 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { authenticate } from "@xboxreplay/xboxlive-auth";
 
-interface XboxUserData {
-  user_hash: string;
-  xsts_token: string;
-  expires_on: string;
-}
+import { XboxUserData } from "../types";
 
 @Injectable()
 export class XboxApiGuard implements CanActivate {

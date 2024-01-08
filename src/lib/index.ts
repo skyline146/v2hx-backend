@@ -5,3 +5,4 @@ export * from "./parse-hwid";
 export * from "./get-current-date";
 export * from "./log-to-discord";
 export * from "./invalid-hwids-log-layout";
+export * from "./is-xuid";

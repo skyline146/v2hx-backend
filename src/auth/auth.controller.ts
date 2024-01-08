@@ -46,11 +46,11 @@ export class AuthController {
   ) {
     const { a, b } = body;
 
-    const hdd = parseHwid(a);
-    const mac_address = parseHwid(b);
+    const loginHdd = parseHwid(a);
+    const loginMacAddress = parseHwid(b);
 
     try {
-      await this.usersService.findOne({ hdd, mac_address });
+      await this.usersService.findOne({ hdd: loginHdd, mac_address: loginMacAddress });
     } catch (err) {
       throw new BadRequestException();
     }
@@ -58,48 +58,60 @@ export class AuthController {
     const user = req.user;
 
     //first login
-    if (!user.hdd || !user.mac_address) {
+    if (!user.hdd) {
       await this.usersService.update(user.username, {
-        hdd,
-        mac_address,
+        hdd: loginHdd,
+        mac_address: loginMacAddress,
         ip: req.ip,
       });
     } //check hwids validity on next logins
-    else if (hdd !== user.hdd || mac_address !== user.mac_address) {
-      //update user's last hwids, adding warn
-      this.usersService.update(user.username, {
-        last_hdd: hdd,
-        last_mac_address: mac_address,
-        last_entry_date: new Date().toISOString(),
-        last_ip: req.ip,
-        warn: user.warn + 1,
-      });
-
-      this.logger.warn(invalidHwidsLog(user, hdd, mac_address, req.ip));
-
-      //check if 2 hwids are invalid
-      if (hdd !== user.hdd && mac_address !== user.mac_address) {
+    else {
+      try {
+        //check hdd validity
+        if (loginHdd !== user.hdd) {
+          throw new Error("Invalid HDD");
+        }
+        //if user dont have mac_address on next logins, pass if hdd valid
+        if (loginMacAddress) {
+          //if user doen't have static mac_address in database, store it and pass
+          if (!user.mac_address) {
+            //update user static mac_address
+            this.usersService.update(user.username, {
+              mac_address: loginMacAddress,
+            });
+          } else {
+            //check mac_address validity
+            if (loginMacAddress !== user.mac_address) {
+              throw new Error("Invalid MAC Address");
+            }
+          }
+        }
+      } catch (err) {
         //adding ban
         this.usersService.update(user.username, {
+          last_hdd: loginHdd,
+          last_mac_address: loginMacAddress,
+          last_entry_date: new Date().toISOString(),
+          last_ip: req.ip,
+          warn: user.warn + 1,
           ban: true,
         });
 
+        this.logger.warn(invalidHwidsLog(user, loginHdd, loginMacAddress, req.ip));
         //log to discord with red level
-        logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15548997);
+        logToDiscord(invalidHwidsLog(user, loginHdd, loginMacAddress, req.ip), 15548997);
 
+        // "Computer does not match with initial account"
         throw new UnauthorizedException("Computer does not match with initial account");
       }
-
-      //pass if one of 2 hwids is invalid, log to discord with orange level
-      logToDiscord(invalidHwidsLog(user, hdd, mac_address, req.ip), 15105570);
     }
 
     //validation passed, return dll
     this.usersService.update(user.username, {
+      last_hdd: loginHdd,
+      last_mac_address: loginMacAddress,
       last_entry_date: new Date().toISOString(),
       last_ip: req.ip,
-      last_hdd: hdd,
-      last_mac_address: mac_address,
     });
 
     this.logger.info(`User ${user.username} logged in loader. IP: ${req.ip}`);

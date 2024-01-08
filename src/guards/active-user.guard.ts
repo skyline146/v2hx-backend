@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { FastifyRequest } from "fastify";
 
@@ -24,25 +25,34 @@ export class ActiveUserGuard implements CanActivate {
 
     let user: UserRowDto;
 
-    if (request.body) {
+    if (request.body?.username && request.body?.password) {
+      //if username and password are presented in request, validate by username and password
       const { username, password } = request.body;
 
       user = await this.authService.validateUser(username, password);
-    } else if (request.user) {
-      user = await this.usersService.findOne({ username: request.user.username });
-    } else {
-      const { a, b } = request.headers;
+    } else if (request.headers["a"] && request.headers["b"]) {
+      //if headers with hwids presented in request, validate by decipher function
+      // a - hdd, b - for another hwid (change mac_address)
+      const { a } = request.headers;
 
-      let hdd: string, mac_address: string;
+      let hdd: string;
 
       try {
         hdd = parseHwid(JSON.parse(a));
-        mac_address = parseHwid(JSON.parse(b));
+        // mac_address = parseHwid(JSON.parse(b));
 
-        user = await this.usersService.findOne({ hdd, mac_address });
+        user = await this.usersService.findOne({ hdd });
       } catch (err) {
+        //throw error on invalid parsing
         throw new BadRequestException();
       }
+    } else if (request.user) {
+      //if user presented in request, after JwtAuthGuard
+      user = await this.usersService.findOne({ username: request.user.username });
+    }
+
+    if (user === undefined) {
+      throw new UnauthorizedException("This endpoint requires authorization");
     }
 
     //check if user exists
@@ -50,18 +60,21 @@ export class ActiveUserGuard implements CanActivate {
       throw new NotFoundException("User not found");
     }
 
+    //if user is admin - allow without checking on ban and active subscription
+    if (user.admin) return true;
+
     //check if account is banned
     if (user.ban) {
       this.usersService.update(user.username, {
         last_entry_date: new Date().toISOString(),
       });
 
-      throw new UnauthorizedException("You have no access, please create ticket in discord");
+      throw new ForbiddenException("You have no access, please create ticket in discord");
     }
 
     //check on active subscription
     if (!checkSubscription(user.expire_date)) {
-      throw new UnauthorizedException("You don`t have active subscription");
+      throw new ForbiddenException("You don`t have active subscription");
     }
 
     request.user = user;

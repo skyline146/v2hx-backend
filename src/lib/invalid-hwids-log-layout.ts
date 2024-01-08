@@ -6,7 +6,9 @@ export const invalidHwidsLog = (
   login_mac_address: string,
   login_ip: string
 ) => {
-  return `User ${user.username} failed to log in with invalid hwids. Warns: ${user.warn + 1}
+  return `User ${user.username} ${
+    login_mac_address ? `failed to log in.` : "logged in with no MAC Address."
+  } Warns: ${user.warn + 1}
   HDD: ${user.hdd}
   Login HDD: ${login_hdd}
   -------------------------------
