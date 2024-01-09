@@ -56,7 +56,7 @@ services:
       - "4173:4173"
     volumes:
       - ../v2hx-frontend/src:/frontend/src
-      - ../v2hx-frontend/public:/frontend/dist
+      - ../v2hx-frontend/public/features.json:/frontend/dist/features.json
 
   # pgadmin:
   #   image: dpage/pgadmin4
