@@ -65,9 +65,10 @@ export class UsersController {
     const { page, search_value } = query;
     const pageN: number = page ? +page : 1;
 
-    const searchQuery = search_value
-      ? [{ username: ILike(`%${search_value}%`) }, { discord_id: Like(`%${search_value}%`) }]
-      : { username: undefined };
+    const searchQuery = [
+      { username: ILike(`%${search_value}%`) },
+      { discord_id: Like(`%${search_value}%`) },
+    ];
 
     const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
 

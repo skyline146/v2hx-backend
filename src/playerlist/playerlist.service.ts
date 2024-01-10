@@ -8,11 +8,11 @@ import { Playerlist } from "src/entities";
 
 import { isXUID } from "src/lib";
 import { XboxAuth, XboxGetUsersByXuids, XboxGetUsersByXuidsBody } from "./types";
-import { PlayerDto } from "./dtos";
+import { PlayerRowDto } from "./dtos";
 
 type Player = Omit<Playerlist, "id" | "added_by">;
 
-type FindAllOptions = {
+type FindOptions = {
   xuid?: FindOperator<string>;
   gamertag?: FindOperator<string>;
 };
@@ -72,10 +72,6 @@ export class PlayerlistService {
     return await this.playerlistRepo.find({ where: options });
   }
 
-  async getPlayerType(xuid: string) {
-    return await this.playerlistRepo.findOne({ where: { xuid } });
-  }
-
   async checkPlayer(xuidOrGamertag: string, authorization: XboxAuth) {
     const data = await this.xboxApiRequest<XboxGetUsersByXuids>(
       `users/${isXUID(xuidOrGamertag)}/profile/settings?settings=Gamertag`,
@@ -98,7 +94,7 @@ export class PlayerlistService {
     await this.playerlistRepo.save(playerToAdd);
   }
 
-  async update(id: string, newData: PlayerDto) {
+  async update(id: string, newData: PlayerRowDto) {
     const player = await this.playerlistRepo.findOneBy({ id });
 
     return await this.playerlistRepo.save(Object.assign(player, newData));
@@ -114,7 +110,7 @@ export class PlayerlistService {
     return await this.playerlistRepo.remove(playerToRemove);
   }
 
-  async findAll(options: FindAllOptions | FindAllOptions[]) {
+  async findAll(options: FindOptions | FindOptions[]) {
     return await this.playerlistRepo.findAndCount({
       where: options,
       order: {
@@ -123,7 +119,7 @@ export class PlayerlistService {
     });
   }
 
-  async findOne(options: Partial<PlayerDto>) {
+  async findOne(options: FindOptions) {
     return await this.playerlistRepo.findOne({ where: options });
   }
 }

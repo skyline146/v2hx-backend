@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -13,7 +14,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { FastifyRequest } from "fastify";
-import { ZodGuard } from "nestjs-zod";
+import { ZodGuard, ZodSerializerDto } from "nestjs-zod";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { ILike, Like } from "typeorm";
@@ -23,7 +24,13 @@ import { XboxApiGuard } from "./guards/xbox-api.guard";
 import { ActiveUserGuard, AdminGuard } from "src/guards";
 import { JwtAuthGuard } from "src/auth/guards";
 
-import { GetPlayersByXUIDsDto, AddPlayerDto, PlayerDto } from "./dtos";
+import {
+  GetPlayersByXUIDsDto,
+  AddPlayerDto,
+  PlayerDto,
+  GetPlayerByGamertagDto,
+  PlayerRowDto,
+} from "./dtos";
 
 @Controller("playerlist")
 export class PlayerlistController {
@@ -37,9 +44,10 @@ export class PlayerlistController {
   async getPlayerlist(@Query() query: { search_value: string }) {
     const { search_value } = query;
 
-    const searchQuery = search_value
-      ? [{ gamertag: ILike(`%${search_value}%`) }, { xuid: Like(`%${search_value}%`) }]
-      : { gamertag: undefined };
+    const searchQuery = [
+      { gamertag: ILike(`%${search_value}%`) },
+      { xuid: Like(`%${search_value}%`) },
+    ];
 
     const [players, total] = await this.playerlistService.findAll(searchQuery);
 
@@ -66,9 +74,22 @@ export class PlayerlistController {
     return req.xbox_user;
   }
 
+  @UseGuards(JwtAuthGuard, ActiveUserGuard, new ZodGuard("params", GetPlayerByGamertagDto))
+  @ZodSerializerDto(PlayerDto)
+  @Get("/:gamertag")
+  async getUser(@Param("gamertag") gamertag: string) {
+    const player = await this.playerlistService.findOne({ gamertag: ILike(gamertag) });
+
+    if (!player) {
+      throw new NotFoundException("Player not found.");
+    }
+
+    return player;
+  }
+
   @UseGuards(AdminGuard)
   @Patch("/:id")
-  async updateUser(@Param("id") id: string, @Body() body: PlayerDto) {
+  async updateUser(@Param("id") id: string, @Body() body: PlayerRowDto) {
     await this.playerlistService.update(id, body);
   }
 
