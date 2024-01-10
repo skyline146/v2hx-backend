@@ -54,7 +54,9 @@ export class PlayerlistController {
       body.xuids.map((xuid) => ({ xuid }))
     );
 
-    return xuidsWithTags.map((player) => ({ xuid: player.xuid, type: player.type }));
+    const matched_xuids = xuidsWithTags.map((player) => ({ xuid: player.xuid, type: player.type }));
+
+    return { matched_xuids };
   }
 
   // @UseGuards(ActiveUserGuard, XboxApiGuard)
