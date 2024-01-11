@@ -53,8 +53,7 @@ export class PlayerlistController {
     return { players, total };
   }
 
-  // @UseGuards(ActiveUserGuard, new ZodGuard("body", GetPlayersByXUIDsDto))
-  @UseGuards(new ZodGuard("body", GetPlayersByXUIDsDto))
+  @UseGuards(ActiveUserGuard, new ZodGuard("body", GetPlayersByXUIDsDto))
   @Post("")
   async getPlayersWithTags(@Body() body: GetPlayersByXUIDsDto) {
     const xuidsWithTags = await this.playerlistService.getMatchedPlayers(
@@ -66,8 +65,7 @@ export class PlayerlistController {
     return { matched_xuids };
   }
 
-  // @UseGuards(ActiveUserGuard, XboxApiGuard)
-  @UseGuards(XboxApiGuard)
+  @UseGuards(ActiveUserGuard, XboxApiGuard)
   @Get("/token")
   async getToken(@Request() req: FastifyRequest) {
     return req.xbox_user;
