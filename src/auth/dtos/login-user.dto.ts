@@ -8,6 +8,7 @@ const LoginUserSchema = z.object({
   password: z.string(),
   a: z.array(z.number()),
   b: z.array(z.number()).optional(),
+  c: z.string(),
 });
 
 export class LoginUserDto extends createZodDto(LoginUserSchema) {}

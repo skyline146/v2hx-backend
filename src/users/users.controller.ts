@@ -28,7 +28,13 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
 import { TokenService } from "src/token/token.service";
-import { checkSubscription, getCookieOptions, getHashedPassword, parseHwid } from "src/lib";
+import {
+  checkSubscription,
+  decryptMagicValue,
+  getCookieOptions,
+  getHashedPassword,
+  parseHwid,
+} from "src/lib";
 
 import {
   ChangePasswordDto,
@@ -37,8 +43,8 @@ import {
   UserRowDto,
   GetUsersQueryDto,
   GetUserByHwidsDto,
+  GetUserByHwidsResponseDto,
 } from "./dtos";
-import { GetUserByHwidsResponse } from "./types";
 
 @UseGuards(JwtAuthGuard)
 @Controller("users")
@@ -107,18 +113,19 @@ export class UsersController {
   }
 
   @Public()
+  @ZodSerializerDto(GetUserByHwidsResponseDto)
   @Get("/get-by-hwids")
-  async getUserByHwids(
-    @Request() req: FastifyRequest<{ Headers: GetUserByHwidsDto }>
-  ): Promise<GetUserByHwidsResponse> {
-    const { a } = req.headers;
+  async getUserByHwids(@Request() req: FastifyRequest<{ Headers: GetUserByHwidsDto }>) {
+    const { a, c } = req.headers;
 
     let hdd: string;
 
     let user: UserRowDto;
 
     try {
-      hdd = parseHwid(JSON.parse(a));
+      const magicValue = decryptMagicValue(c);
+      hdd = parseHwid(JSON.parse(a), magicValue);
+
       // mac_address = parseHwid(JSON.parse(b));
 
       user = await this.usersService.findOne({ hdd });
@@ -130,9 +137,7 @@ export class UsersController {
       throw new NotFoundException("User not found");
     }
 
-    const { expire_date, username, ban, online } = user;
-
-    return { expire_date, username, ban, online };
+    return user;
   }
 
   @UseGuards(AdminGuard)

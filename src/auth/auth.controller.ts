@@ -25,7 +25,13 @@ import { TokenService } from "src/token/token.service";
 
 import { LoginUserDto } from "./dtos/login-user.dto";
 import { UserDto } from "src/users/dtos/user.dto";
-import { getCookieOptions, parseHwid, logToDiscord, invalidHwidsLog } from "src/lib";
+import {
+  getCookieOptions,
+  parseHwid,
+  logToDiscord,
+  invalidHwidsLog,
+  decryptMagicValue,
+} from "src/lib";
 
 @Controller("auth")
 export class AuthController {
@@ -44,9 +50,10 @@ export class AuthController {
     @Request() req: FastifyRequest,
     @Res() res: FastifyReply
   ) {
-    const { a } = body;
+    const { a, c } = body;
 
-    const loginHdd = parseHwid(a);
+    const magicValue = decryptMagicValue(c);
+    const loginHdd = parseHwid(a, magicValue);
     // const loginMacAddress = parseHwid(b);
 
     try {

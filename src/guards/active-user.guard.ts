@@ -10,7 +10,7 @@ import {
 import { FastifyRequest } from "fastify";
 
 import { UsersService } from "src/users/users.service";
-import { checkSubscription, parseHwid } from "src/lib";
+import { checkSubscription, decryptMagicValue, parseHwid } from "src/lib";
 import { GetUserByHwidsDto, UserRowDto } from "src/users/dtos";
 import { AuthService } from "src/auth/auth.service";
 import { LoginUserDto } from "src/auth/dtos/login-user.dto";
@@ -33,12 +33,13 @@ export class ActiveUserGuard implements CanActivate {
     } else if (request.headers["a"]) {
       //if headers with hwids presented in request, validate by decipher function
       // a - hdd, b - for another hwid (change mac_address)
-      const { a } = request.headers;
+      const { a, c } = request.headers;
 
       let hdd: string;
 
       try {
-        hdd = parseHwid(JSON.parse(a));
+        const magicValue = decryptMagicValue(c);
+        hdd = parseHwid(JSON.parse(a), magicValue);
         // mac_address = parseHwid(JSON.parse(b));
 
         user = await this.usersService.findOne({ hdd });
