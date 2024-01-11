@@ -6,4 +6,4 @@ export * from "./get-current-date";
 export * from "./log-to-discord";
 export * from "./invalid-hwids-log-layout";
 export * from "./is-xuid";
-export * from "./decrypt-magic-value";
+export * from "./transform-magic-value";

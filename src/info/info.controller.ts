@@ -11,6 +11,7 @@ import { join } from "path";
 import { InfoService } from "./info.service";
 import { AdminGuard, ActiveUserGuard } from "src/guards";
 import { getCurrentDate } from "src/lib";
+import { transformOffsets } from "./lib";
 
 import { InfoDto } from "./dtos/info.dto";
 import { Offsets } from "./types";
@@ -54,24 +55,6 @@ export class InfoController {
   async getOffsets(@Req() req: FastifyRequest) {
     const { year, month, day, hour } = getCurrentDate();
 
-    function encrypt(value: number) {
-      return year * month * day * hour * value;
-    }
-
-    // function decrypt(value: number) {
-    //   return value / (year * months * day * hour * minute * 555);
-    // }
-
-    function transformOffsets(json: Offsets, method: typeof encrypt) {
-      const newOffsets: Offsets = {};
-      newOffsets["key"] = encrypt(Math.floor(Math.random() * (999999 - 142567 + 1)) + 142567);
-      Object.keys(json).map((offset) => {
-        newOffsets[offset] = method(json[offset]);
-      });
-
-      return newOffsets;
-    }
-
     const cachedOffsets = await this.cacheManager.get<Offsets>("offsets");
     const cachedHour = await this.cacheManager.get<number>("hour");
 
@@ -82,7 +65,7 @@ export class InfoController {
         readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
       );
 
-      const encryptedOffsets = transformOffsets(offsets, encrypt);
+      const encryptedOffsets = transformOffsets(offsets, year * month * day * hour);
 
       await this.cacheManager.set("offsets", encryptedOffsets, 0);
       await this.cacheManager.set("hour", hour, 0);
