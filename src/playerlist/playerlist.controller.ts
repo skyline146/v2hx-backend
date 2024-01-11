@@ -44,10 +44,9 @@ export class PlayerlistController {
   async getPlayerlist(@Query() query: { search_value: string }) {
     const { search_value } = query;
 
-    const searchQuery = [
-      { gamertag: ILike(`%${search_value}%`) },
-      { xuid: Like(`%${search_value}%`) },
-    ];
+    const searchQuery = search_value
+      ? [{ gamertag: ILike(`%${search_value}%`) }, { xuid: Like(`%${search_value}%`) }]
+      : undefined;
 
     const [players, total] = await this.playerlistService.findAll(searchQuery);
 
