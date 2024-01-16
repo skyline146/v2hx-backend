@@ -110,8 +110,10 @@ export class PlayerlistService {
     return await this.playerlistRepo.remove(playerToRemove);
   }
 
-  async findAll(options: FindOptions | FindOptions[]) {
+  async findAll(page: number, options: FindOptions | FindOptions[]) {
     return await this.playerlistRepo.findAndCount({
+      take: 10,
+      skip: (page - 1) * 10,
       where: options,
       order: {
         gamertag: "ASC",

@@ -30,6 +30,7 @@ import {
   PlayerDto,
   GetPlayerByGamertagDto,
   PlayerRowDto,
+  GetPlayerlistQueryDto,
 } from "./dtos";
 
 @Controller("playerlist")
@@ -41,14 +42,15 @@ export class PlayerlistController {
 
   @UseGuards(AdminGuard)
   @Get("")
-  async getPlayerlist(@Query() query: { search_value: string }) {
-    const { search_value } = query;
+  async getPlayerlist(@Query() query: GetPlayerlistQueryDto) {
+    const { page, search_value } = query;
+    const pageN: number = page ? +page : 1;
 
     const searchQuery = search_value
       ? [{ gamertag: ILike(`%${search_value}%`) }, { xuid: Like(`%${search_value}%`) }]
       : undefined;
 
-    const [players, total] = await this.playerlistService.findAll(searchQuery);
+    const [players, total] = await this.playerlistService.findAll(pageN, searchQuery);
 
     return { players, total };
   }
