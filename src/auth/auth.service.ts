@@ -42,7 +42,7 @@ export class AuthService {
     const user = await this.usersService.findOne({ username });
 
     if (!user) {
-      throw new BadRequestException("Incorrect username or password");
+      throw new BadRequestException("Incorrect username or password.");
     }
 
     const [salt, storedHash] = user.password.split(".");
@@ -50,7 +50,7 @@ export class AuthService {
     const hash = (await scrypt(password, salt, 32)) as Buffer;
 
     if (hash.toString("hex") !== storedHash) {
-      throw new BadRequestException("Incorrect username or password");
+      throw new BadRequestException("Incorrect username or password.");
     }
 
     return user;

@@ -113,7 +113,7 @@ export class PlayerlistController {
         req.user.username
       );
     } catch (err) {
-      throw new BadRequestException("Player has been added already");
+      throw new BadRequestException("Player has been added already.");
     }
 
     this.logger.info(

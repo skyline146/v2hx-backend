@@ -53,13 +53,15 @@ export class ActiveUserGuard implements CanActivate {
     }
 
     if (user === undefined) {
-      throw new UnauthorizedException("This endpoint requires authorization");
+      throw new UnauthorizedException("This endpoint requires authorization.");
     }
 
     //check if user exists
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException("User not found.");
     }
+
+    request.user = user;
 
     //if user is admin - allow without checking on ban and active subscription
     if (user.admin) return true;
@@ -70,15 +72,13 @@ export class ActiveUserGuard implements CanActivate {
         last_entry_date: new Date().toISOString(),
       });
 
-      throw new ForbiddenException("You have no access, please create ticket in discord");
+      throw new ForbiddenException("You have no access, please create ticket in discord.");
     }
 
     //check on active subscription
     if (!checkSubscription(user.expire_date)) {
-      throw new ForbiddenException("You don`t have active subscription");
+      throw new ForbiddenException("You don`t have active subscription.");
     }
-
-    request.user = user;
 
     return true;
   }

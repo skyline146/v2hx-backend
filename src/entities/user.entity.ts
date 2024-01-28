@@ -1,5 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
 
+import { SubscriptionType } from "src/users/enums";
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn("uuid")
@@ -18,6 +20,15 @@ export class User {
   password: string;
 
   @Column({ default: "" })
+  invitation_code: string;
+
+  @Column({ default: 0 })
+  code_activations: number;
+
+  @Column({ default: false })
+  is_code_activated: boolean;
+
+  @Column({ default: "" })
   hdd: string;
 
   @Column({ default: "" })
@@ -31,6 +42,9 @@ export class User {
 
   @Column({ default: "" })
   expire_date: string;
+
+  @Column({ type: "enum", enum: SubscriptionType, default: SubscriptionType.No })
+  subscription_type: SubscriptionType;
 
   @Column({ default: "" })
   last_entry_date: string;

@@ -34,6 +34,7 @@ import {
   getCookieOptions,
   getHashedPassword,
   parseHwid,
+  addDaysToSubscription,
 } from "src/lib";
 
 import {
@@ -72,7 +73,11 @@ export class UsersController {
     const pageN: number = page ? +page : 1;
 
     const searchQuery = search_value
-      ? [{ username: ILike(`%${search_value}%`) }, { discord_id: Like(`%${search_value}%`) }]
+      ? [
+          { username: ILike(`%${search_value}%`) },
+          { discord_id: Like(`%${search_value}%`) },
+          { hdd: Like(`%${search_value}%`) },
+        ]
       : undefined;
 
     const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
@@ -100,9 +105,7 @@ export class UsersController {
       .filter((user) => checkSubscription(user.expire_date))
       .map((user) => ({
         ...user,
-        expire_date: new Date(
-          new Date(user.expire_date).getTime() + 24 * 60 * 60 * 1000
-        ).toISOString(),
+        expire_date: addDaysToSubscription(user.expire_date, 1),
       }));
 
     await this.usersService.updateMany(users);
@@ -134,7 +137,7 @@ export class UsersController {
     }
 
     if (!user) {
-      throw new NotFoundException("User not found");
+      throw new NotFoundException("User not found.");
     }
 
     return user;
@@ -193,7 +196,7 @@ export class UsersController {
 
     //if user exists throw an error
     if (user) {
-      throw new BadRequestException("Username in use");
+      throw new BadRequestException("Username in use.");
     }
 
     const updatedUser = await this.usersService.update(req.user.username, {

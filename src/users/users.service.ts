@@ -6,9 +6,10 @@ import { UserRowDto } from "./dtos";
 import { User } from "../entities/user.entity";
 
 type FindAllOptions = {
-  expire_date?: FindOperator<string>;
   username?: FindOperator<string>;
   discord_id?: FindOperator<string>;
+  hdd?: FindOperator<string>;
+  expire_date?: FindOperator<string>;
   online?: boolean;
 };
 
