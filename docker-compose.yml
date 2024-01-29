@@ -57,6 +57,8 @@ services:
     volumes:
       - ../v2hx-frontend/src:/frontend/src
       - ../v2hx-frontend/public/features.json:/frontend/dist/features.json
+      - ../v2hx-frontend/public/robots.txt:/frontend/dist/robots.txt
+      - ../v2hx-frontend/public/sitemap.xml:/frontend/dist/sitemap.xml
 
   # pgadmin:
   #   image: dpage/pgadmin4
