@@ -1,21 +1,28 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, BeforeApplicationShutdown } from "@nestjs/common";
 import { Repository, FindOperator } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { UserRowDto } from "./dtos";
 import { User } from "../entities/user.entity";
+import { SubscriptionType } from "./enums";
 
 type FindAllOptions = {
   username?: FindOperator<string>;
   discord_id?: FindOperator<string>;
   hdd?: FindOperator<string>;
   expire_date?: FindOperator<string>;
+  subscription_type?: FindOperator<SubscriptionType>;
   online?: boolean;
 };
 
 @Injectable()
-export class UsersService {
+export class UsersService implements BeforeApplicationShutdown {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
+
+  //setting all online users to false on server shutdown
+  async beforeApplicationShutdown() {
+    await this.userRepo.update({ online: true }, { online: false });
+  }
 
   async create(username: string, password: string) {
     const user = this.userRepo.create({
@@ -30,7 +37,7 @@ export class UsersService {
     return await this.userRepo.findOne({ where: options });
   }
 
-  async findAll(options?: FindAllOptions) {
+  async findAll(options?: FindAllOptions | FindAllOptions[]) {
     return await this.userRepo.find({ where: options });
   }
 

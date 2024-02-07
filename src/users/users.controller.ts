@@ -14,9 +14,10 @@ import {
   NotFoundException,
   Inject,
 } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { randomBytes } from "crypto";
-import { Not, And, Like, ILike } from "typeorm";
+import { Like, ILike, MoreThanOrEqual } from "typeorm";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { UseZodGuard, ZodSerializerDto } from "nestjs-zod";
@@ -29,7 +30,6 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
 import { TokenService } from "src/token/token.service";
 import {
-  checkSubscription,
   decryptMagicValue,
   getCookieOptions,
   getHashedPassword,
@@ -65,31 +65,51 @@ export class UsersController {
     return newUser;
   }
 
+  @SkipThrottle()
   @UseGuards(AdminGuard)
+  @UseZodGuard("query", GetUsersQueryDto)
   @ZodSerializerDto(UsersTableDto)
   @Get("")
   async getUsers(@Query() query: GetUsersQueryDto) {
-    const { page, search_value } = query;
-    const pageN: number = page ? +page : 1;
+    const { page, search_value, filter } = query;
 
-    const searchQuery = search_value
-      ? [
-          { username: ILike(`%${search_value}%`) },
-          { discord_id: Like(`%${search_value}%`) },
-          { hdd: Like(`%${search_value}%`) },
-        ]
-      : undefined;
+    const searchQuery = [];
 
-    const [users, total] = await this.usersService.findLikePagination(pageN, searchQuery);
+    if (search_value) {
+      searchQuery.push(
+        { username: ILike(`%${search_value}%`) },
+        { discord_id: Like(`%${search_value}%`) },
+        { hdd: Like(`%${search_value}%`) }
+      );
+    }
 
-    return { users, total };
-  }
+    switch (filter) {
+      case "online": {
+        if (searchQuery.length === 0) {
+          searchQuery.push({ online: true });
+        } else {
+          searchQuery.forEach((query) => {
+            query.online = true;
+          });
+        }
 
-  @UseGuards(AdminGuard)
-  @ZodSerializerDto(UsersTableDto)
-  @Get("/online")
-  async getOnlineUsers() {
-    const [users, total] = await this.usersService.findAllCount({ online: true });
+        break;
+      }
+      case "active_subscription": {
+        if (searchQuery.length === 0) {
+          searchQuery.push({ expire_date: MoreThanOrEqual(new Date().toISOString()) });
+        } else {
+          searchQuery.forEach((query) => {
+            // query.subscription_type = activeSubscriptionQuery[0].subscription_type;
+            query.expire_date = MoreThanOrEqual(new Date().toISOString());
+          });
+        }
+
+        break;
+      }
+    }
+
+    const [users, total] = await this.usersService.findLikePagination(page, searchQuery);
 
     return { users, total };
   }
@@ -99,14 +119,12 @@ export class UsersController {
   async addFreeDay() {
     const users: User[] = (
       await this.usersService.findAll({
-        expire_date: And(Not(""), Not("Lifetime")),
+        expire_date: MoreThanOrEqual(new Date().toISOString()),
       })
-    )
-      .filter((user) => checkSubscription(user.expire_date))
-      .map((user) => ({
-        ...user,
-        expire_date: addDaysToSubscription(user.expire_date, 1),
-      }));
+    ).map((user) => ({
+      ...user,
+      expire_date: addDaysToSubscription(user, 1),
+    }));
 
     await this.usersService.updateMany(users);
 

@@ -15,6 +15,8 @@ import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 
 import { UsersService } from "src/users/users.service";
+import { LoginUserByHwidsDto } from "./auth/dtos";
+import { decryptMagicValue, parseHwid } from "./lib";
 
 @WebSocketGateway({ path: "api/playing" })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -27,84 +29,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private clients: Map<string, WebSocket> = new Map();
 
-  async handleConnection(client: WebSocket, req: IncomingMessage) {
-    // console.log(client);
-    // const username = new URL(req.url, "http://localhost:7142").searchParams.get("username");
-    // console.log(`Connected user: ${username}`);
-    // // const username = client.handshake.query["username"] as string;
-    // const user = await this.usersService.findOne({ username });
-    // if (!user) {
-    //   ws.close(1011, "User not found");
-    //   return;
-    // }
-    // if (user.ban) {
-    //   ws.close(1011, "User banned");
-    //   return;
-    // }
-    // if (user.online) {
-    //   this.usersService.update(username, { ban: true });
-    //   this.logger.warn(`User ${username} tried to connect while session is active. Ban: true`);
-    //   ws.close(1011, "Session is active already");
-    //   return;
-    // }
-    // ws.send("hello from websocket");
-    // this.server.clients.forEach((client) => client.send("hello from server"));
-    // await this.usersService.update(username, { online: true });
-    // ws.on("close", async () => {
-    //   await this.usersService.update(username, { online: false });
-    //   console.log(`Connection closed on user: ${username}`);
-    // });
-    // console.log(`${client.handshake.query["username"]} is online now.`);
-    // console.log(`Connected to socket: ${client.id}`);
-  }
-
-  async handleDisconnect(client: WebSocket) {
-    const username = this.getUsernameByClient(client);
-
-    this.clients.delete(username);
-    await this.usersService.update(username, { online: false });
-  }
-
-  @SubscribeMessage("message")
-  handleMessage(@MessageBody() data: string): string {
-    console.log("message event");
-
-    this.server.emit("message", data);
-    return data;
-  }
-
-  @SubscribeMessage("username")
-  async handleUserOnline(
-    @ConnectedSocket() client: WebSocket,
-    @MessageBody() username: string
-  ): Promise<void> {
-    const user = await this.usersService.findOne({ username });
-
-    if (!user) {
-      client.close(1011, "User not found");
-      return;
-    }
-
-    if (user.ban) {
-      client.close(1011, "User banned");
-      return;
-    }
-
-    if (user.online) {
-      this.usersService.update(username, { ban: true });
-      this.logger.warn(`User ${username} tried to connect while session is active. Ban: true`);
-
-      client.close(1011, "Session is active already");
-      this.clients.get(user.username).close(1011, "Session is active already");
-      this.clients.delete(user.username);
-
-      return;
-    }
-
-    this.clients.set(username, client);
-    await this.usersService.update(username, { online: true });
-  }
-
   private getUsernameByClient(client: WebSocket): string | undefined {
     for (const [username, c] of this.clients) {
       if (c === client) {
@@ -112,5 +36,126 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
     return undefined;
+  }
+
+  async handleConnection(client: WebSocket, req: IncomingMessage) {
+    const pingInterval = setInterval(() => {
+      client.ping();
+    }, 20000);
+
+    const pingTimeout = setTimeout(() => {
+      console.log(`Client ${client} did not respond to ping, disconnecting...`);
+      client.terminate();
+    }, 30000);
+
+    client.on("pong", () => {
+      clearTimeout(pingTimeout);
+    });
+
+    client.on("close", () => {
+      clearInterval(pingInterval);
+      clearTimeout(pingTimeout);
+    });
+  }
+
+  async handleDisconnect(client: WebSocket) {
+    const username = this.getUsernameByClient(client);
+
+    this.logger.info(`User ${username} disconnected from WebSocket.`);
+    this.clients.delete(username);
+    await this.usersService.update(username, { online: false });
+  }
+
+  @SubscribeMessage("message")
+  handleMessage(@MessageBody() test: any): string {
+    console.log("message event");
+
+    console.log(test);
+
+    this.server.emit("message", test);
+    return test;
+  }
+
+  @SubscribeMessage("login")
+  async handleUserLogin(
+    @ConnectedSocket() connectedClient: WebSocket,
+    @MessageBody() data: LoginUserByHwidsDto
+  ): Promise<void> {
+    const { a, c } = data;
+
+    const magicValue = decryptMagicValue(c);
+    const loginHdd = parseHwid(a, magicValue);
+    // const loginMacAddress = parseHwid(b);
+
+    try {
+      await this.usersService.findOne({ hdd: loginHdd });
+    } catch (err) {
+      connectedClient.close(1007, "Invalid login data");
+      return;
+    }
+
+    const user = await this.usersService.findOne({ hdd: loginHdd });
+
+    if (!user) {
+      connectedClient.close(1011, "User not found");
+      return;
+    }
+
+    if (user.ban) {
+      connectedClient.close(1011, "User banned");
+      return;
+    }
+
+    const existedClient = this.clients.get(user.username);
+
+    if (existedClient) {
+      this.usersService.update(user.username, { ban: true, online: false });
+      this.logger.warn(`User ${user.username} tried to connect while session is active. Ban: TRUE`);
+
+      connectedClient.close(1011, "Session is active already");
+      existedClient.close(1011, "Session is active already");
+      this.clients.delete(user.username);
+
+      return;
+    }
+
+    this.logger.info(`User ${user.username} connected to WebSocket.`);
+    this.clients.set(user.username, connectedClient);
+    await this.usersService.update(user.username, { online: true });
+  }
+
+  @SubscribeMessage("username")
+  async handleUserOnline(
+    @ConnectedSocket() connectedClient: WebSocket,
+    @MessageBody() username: string
+  ): Promise<void> {
+    const user = await this.usersService.findOne({ username });
+
+    if (!user) {
+      connectedClient.close(1011, "User not found");
+      return;
+    }
+
+    if (user.ban) {
+      connectedClient.close(1011, "User banned");
+      return;
+    }
+
+    const existedClient = this.clients.get(user.username);
+
+    if (existedClient) {
+      this.usersService.update(username, { ban: true, online: false });
+      this.logger.warn(`User ${username} tried to connect while session is active. Ban: TRUE`);
+
+      connectedClient.close(1011, "Session is active already");
+      existedClient.close(1011, "Session is active already");
+      this.clients.delete(user.username);
+
+      return;
+    }
+
+    this.logger.info(`User ${user.username} connected to WebSocket.`);
+    this.clients.set(username, connectedClient);
+    await this.usersService.update(username, { online: true });
   }
 }

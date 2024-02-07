@@ -67,7 +67,7 @@ export class InvitesController {
       throw new NotFoundException("Invitation code not found.");
     }
 
-    if (!checkSubscription(userInviter.expire_date)) {
+    if (!checkSubscription(userInviter)) {
       throw new ForbiddenException("Inviter does not have active subscription.");
     }
 
@@ -77,7 +77,7 @@ export class InvitesController {
         case "Week": {
           //add 1 day to userInviter
           this.usersService.update(userInviter.username, {
-            expire_date: addDaysToSubscription(userInviter.expire_date, 1),
+            expire_date: addDaysToSubscription(userInviter, 1),
           });
 
           break;
@@ -85,7 +85,7 @@ export class InvitesController {
         case "Month": {
           //add 3 days to userInviter
           this.usersService.update(userInviter.username, {
-            expire_date: addDaysToSubscription(userInviter.expire_date, 3),
+            expire_date: addDaysToSubscription(userInviter, 3),
           });
 
           break;
@@ -93,7 +93,7 @@ export class InvitesController {
         case "Lifetime": {
           //add 7 days to userInviter
           this.usersService.update(userInviter.username, {
-            expire_date: addDaysToSubscription(userInviter.expire_date, 7),
+            expire_date: addDaysToSubscription(userInviter, 7),
           });
 
           break;
@@ -109,7 +109,7 @@ export class InvitesController {
     //set is_code_activated to true for accepter, add 1 day to accepter
     userAccepter = await this.usersService.update(userAccepter.username, {
       is_code_activated: true,
-      expire_date: addDaysToSubscription(userAccepter.expire_date, 1),
+      expire_date: addDaysToSubscription(userAccepter, 1),
     });
 
     this.logger.info(

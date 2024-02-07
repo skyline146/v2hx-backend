@@ -13,6 +13,7 @@ import {
   Request,
   UseGuards,
 } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { FastifyRequest } from "fastify";
 import { ZodGuard, ZodSerializerDto } from "nestjs-zod";
 import { Logger } from "winston";
@@ -40,6 +41,7 @@ export class PlayerlistController {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
+  @SkipThrottle()
   @UseGuards(AdminGuard)
   @Get("")
   async getPlayerlist(@Query() query: GetPlayerlistQueryDto) {

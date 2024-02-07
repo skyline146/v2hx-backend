@@ -1,11 +1,10 @@
-import { UserSchema } from "./user.dto";
 import { createZodDto } from "nestjs-zod";
 import { z } from "nestjs-zod/z";
-import { SubscriptionType } from "../enums";
+
+import { UserSchema } from "./user.dto";
 
 const UserRowSchema = z
   .object({
-    subscription_type: z.nativeEnum(SubscriptionType),
     last_entry_date: z.string(),
     discord_id: z.string(),
     hdd: z.string(),

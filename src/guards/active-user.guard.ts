@@ -76,7 +76,7 @@ export class ActiveUserGuard implements CanActivate {
     }
 
     //check on active subscription
-    if (!checkSubscription(user.expire_date)) {
+    if (!checkSubscription(user)) {
       throw new ForbiddenException("You don`t have active subscription.");
     }
 

@@ -121,7 +121,7 @@ export class AuthController {
       last_ip: req.ip,
     });
 
-    this.logger.info(`User ${user.username} logged in loader. IP: ${req.ip}`);
+    this.logger.info(`User ${user.username} logged in loader. IP: ${req.ip} IPs: ${req.ips}`);
 
     const file = createReadStream(join(process.cwd(), "resources/SoT-DLC-v3.dll"));
 

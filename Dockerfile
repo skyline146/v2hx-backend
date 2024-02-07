@@ -10,7 +10,7 @@ COPY . .
 
 RUN npm run build
 
-CMD [ "npm", "run", "start:prod" ]
+CMD [ "node", "dist/main" ]
 
 FROM node:18 AS development
 

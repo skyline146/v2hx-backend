@@ -6,6 +6,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 
 import { AppModule } from "./app.module";
+import { logToDiscord } from "./lib";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -25,6 +26,10 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix("/api");
+
+  app.enableShutdownHooks();
+
+  await logToDiscord(`Server started. [${configService.get<string>("ENVIRONMENT")}]`, 5763719);
 
   await app.listen(7142, "0.0.0.0");
 }

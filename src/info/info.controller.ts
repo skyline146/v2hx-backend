@@ -2,7 +2,7 @@ import { Body, Controller, Get, Inject, Param, Patch, Res, Req, UseGuards } from
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { ZodSerializerDto } from "nestjs-zod";
+import { UseZodGuard, ZodSerializerDto } from "nestjs-zod";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 import { Logger } from "winston";
 import { createReadStream, readFileSync } from "fs";
@@ -13,7 +13,7 @@ import { AdminGuard, ActiveUserGuard } from "src/guards";
 import { getCurrentDate } from "src/lib";
 import { transformOffsets } from "./lib";
 
-import { InfoDto } from "./dtos/info.dto";
+import { InfoDto, OffsetsDto } from "./dtos";
 import { Offsets } from "./types";
 
 @Controller("info")
@@ -51,23 +51,26 @@ export class InfoController {
   }
 
   @UseGuards(ActiveUserGuard)
-  @Get("/offsets")
-  async getOffsets(@Req() req: FastifyRequest) {
+  @UseZodGuard("params", OffsetsDto)
+  @Get("/offsets/:version")
+  async getOffsets(@Req() req: FastifyRequest, @Param("version") version: string) {
     const { year, month, day, hour } = getCurrentDate();
 
-    const cachedOffsets = await this.cacheManager.get<Offsets>("offsets");
+    const cachedOffsets = await this.cacheManager.get<Offsets>(`offsets_${version}`);
     const cachedHour = await this.cacheManager.get<number>("hour");
 
-    this.logger.info(`User ${req.user.username} received offsets.`);
+    this.logger.info(
+      `User ${req.user.username} received offsets. Version: ${version.toUpperCase()}`
+    );
 
     if (!cachedOffsets || cachedHour !== hour) {
       const offsets: Offsets = JSON.parse(
-        readFileSync(join(process.cwd(), "resources/offsets.json")).toString()
+        readFileSync(join(process.cwd(), `resources/offsets_${version}.json`)).toString()
       );
 
       const encryptedOffsets = transformOffsets(offsets, year * month * day * hour);
 
-      await this.cacheManager.set("offsets", encryptedOffsets, 0);
+      await this.cacheManager.set(`offsets_${version}`, encryptedOffsets, 0);
       await this.cacheManager.set("hour", hour, 0);
 
       return encryptedOffsets;

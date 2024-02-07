@@ -7,4 +7,4 @@ export * from "./log-to-discord";
 export * from "./invalid-hwids-log-layout";
 export * from "./is-xuid";
 export * from "./transform-magic-value";
-export * from "./add-ndays-subscription";
+export * from "./add-days-subscription";
