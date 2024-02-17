@@ -1,4 +1,4 @@
-import { Inject } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
   SubscribeMessage,
   WebSocketGateway,
@@ -10,16 +10,16 @@ import {
 } from "@nestjs/websockets";
 import { Server, WebSocket } from "ws";
 import { IncomingMessage } from "http";
-// import { parse, URL } from "url";
 import { Logger } from "winston";
 import { WINSTON_MODULE_PROVIDER } from "nest-winston";
 
 import { UsersService } from "src/users/users.service";
-import { LoginUserByHwidsDto } from "./auth/dtos";
-import { decryptMagicValue, parseHwid } from "./lib";
+import { LoginUserByHwidsDto } from "src/auth/dtos";
+import { decryptMagicValue, parseHwid } from "src/lib";
 
+@Injectable()
 @WebSocketGateway({ path: "api/playing" })
-export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class WebSocketsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private usersService: UsersService,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
@@ -38,9 +38,23 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return undefined;
   }
 
+  disconnectClient(username: string) {
+    this.clients.get(username).terminate();
+  }
+
+  emitClientEvent(username: string, event: string, data: any) {
+    const client = this.clients.get(username);
+
+    if (!client) {
+      return null;
+    }
+
+    client.send(JSON.stringify({ event, data: { username, ...data } }));
+  }
+
   async handleConnection(client: WebSocket, req: IncomingMessage) {
     const pingInterval = setInterval(() => {
-      client.ping();
+      client.ping(`Server ping: ${new Date(Date.now()).toTimeString()}`);
     }, 20000);
 
     const pingTimeout = setTimeout(() => {
@@ -72,7 +86,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     console.log(test);
 
-    this.server.emit("message", test);
+    this.server.emit("test", test);
     return test;
   }
 
@@ -103,6 +117,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (user.ban) {
       connectedClient.close(1011, "User banned");
+      this.logger.warn(`User ${user.username} tried to connect while banned.`);
       return;
     }
 

@@ -56,25 +56,23 @@ export class InfoController {
   async getOffsets(@Req() req: FastifyRequest, @Param("version") version: string) {
     const { year, month, day, hour } = getCurrentDate();
 
-    const cachedOffsets = await this.cacheManager.get<Offsets>(`offsets_${version}`);
+    let cachedOffsets = await this.cacheManager.get<Offsets>(`offsets_${version}`);
     const cachedHour = await this.cacheManager.get<number>("hour");
-
-    this.logger.info(
-      `User ${req.user.username} received offsets. Version: ${version.toUpperCase()}`
-    );
 
     if (!cachedOffsets || cachedHour !== hour) {
       const offsets: Offsets = JSON.parse(
         readFileSync(join(process.cwd(), `resources/offsets_${version}.json`)).toString()
       );
 
-      const encryptedOffsets = transformOffsets(offsets, year * month * day * hour);
+      cachedOffsets = transformOffsets(offsets, year * month * day * hour);
 
-      await this.cacheManager.set(`offsets_${version}`, encryptedOffsets, 0);
+      await this.cacheManager.set(`offsets_${version}`, cachedOffsets, 0);
       await this.cacheManager.set("hour", hour, 0);
-
-      return encryptedOffsets;
     }
+
+    this.logger.info(
+      `User ${req.user.username} received offsets. Version: ${version.toUpperCase()}`
+    );
 
     return cachedOffsets;
   }

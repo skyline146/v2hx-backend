@@ -29,6 +29,8 @@ import { AdminGuard } from "src/guards/admin.guard";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { Public } from "src/decorators/public.decorator";
 import { TokenService } from "src/token/token.service";
+import { WebSocketsGateway } from "src/websockets/websockets.gateway";
+
 import {
   decryptMagicValue,
   getCookieOptions,
@@ -45,6 +47,7 @@ import {
   GetUsersQueryDto,
   GetUserByHwidsDto,
   GetUserByHwidsResponseDto,
+  EmitClientEventDto,
 } from "./dtos";
 
 @UseGuards(JwtAuthGuard)
@@ -54,6 +57,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private authService: AuthService,
     private tokenService: TokenService,
+    private webSocketsGateway: WebSocketsGateway,
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
   ) {}
 
@@ -163,19 +167,26 @@ export class UsersController {
 
   @UseGuards(AdminGuard)
   @Patch("/:username")
-  async updateUser(@Param("username") username: string, @Body() body: UserRowDto) {
+  async updateUser(@Param("username") username: string, @Body() newUserData: UserRowDto) {
     const oldUser = await this.usersService.findOne({ username });
 
     const changesObject = {};
-    Object.keys(body).forEach((key) => {
-      if (oldUser[key] !== body[key]) {
-        changesObject[key] = `from: ${oldUser[key]} to: ${body[key]}`;
+    Object.keys(newUserData).forEach((key) => {
+      if (oldUser[key] !== newUserData[key]) {
+        changesObject[key] = `from: ${oldUser[key]} to: ${newUserData[key]}`;
       }
     });
 
+    //emit client event if user online and assigned ban
+    if (newUserData.ban && oldUser.online) {
+      this.webSocketsGateway.emitClientEvent(username, "ban", {
+        ban: true,
+      });
+    }
+
     this.logger.info(`Changed ${username}: ${JSON.stringify(changesObject, null, "\t")}`);
 
-    await this.usersService.update(username, body);
+    await this.usersService.update(username, newUserData);
   }
 
   @UseGuards(AdminGuard)
@@ -189,6 +200,24 @@ export class UsersController {
   async deleteUser(@Param("username") username: string) {
     this.logger.warn(`${username} was deleted.`);
     return await this.usersService.remove(username);
+  }
+
+  @UseGuards(AdminGuard)
+  @UseZodGuard("body", EmitClientEventDto)
+  @Post("/:username/emit-event")
+  async emitConnectedUserEvent(
+    @Param("username") username: string,
+    @Body() body: EmitClientEventDto
+  ) {
+    const user = await this.usersService.findOne({ username });
+
+    console.log(body);
+
+    if (!user.online) {
+      throw new BadRequestException("User offline.");
+    }
+
+    this.webSocketsGateway.emitClientEvent(user.username, body.event, body.data);
   }
 
   @UseGuards(AdminGuard)
