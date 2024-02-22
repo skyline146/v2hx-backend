@@ -69,4 +69,7 @@ export class User {
 
   @Column({ default: false })
   admin: boolean;
+
+  @Column({ default: false })
+  private_access: boolean;
 }

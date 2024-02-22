@@ -11,9 +11,10 @@ import { FastifyRequest } from "fastify";
 
 import { UsersService } from "src/users/users.service";
 import { checkSubscription, decryptMagicValue, parseHwid } from "src/lib";
-import { GetUserByHwidsDto, UserRowDto } from "src/users/dtos";
+import { GetUserByHwidsDto } from "src/users/dtos";
 import { AuthService } from "src/auth/auth.service";
 import { LoginUserDto } from "src/auth/dtos/login-user.dto";
+import { User } from "src/entities";
 
 @Injectable()
 export class ActiveUserGuard implements CanActivate {
@@ -23,7 +24,7 @@ export class ActiveUserGuard implements CanActivate {
       .switchToHttp()
       .getRequest();
 
-    let user: UserRowDto;
+    let user: User;
 
     if (request.body?.username && request.body?.password) {
       //if username and password are presented in request, validate by username and password

@@ -123,13 +123,14 @@ export class AuthController {
 
     this.logger.info(`User ${user.username} logged in loader. IP: ${req.ip}`);
 
-    const file = createReadStream(join(process.cwd(), "resources/SoT-DLC-v3.dll"));
+    const fileName = user.private_access ? "SoT-DLC-v3.dev" : "SoT-DLC-v3";
+    const fileReadStream = createReadStream(join(process.cwd(), `resources/${fileName}.dll`));
 
     res
       .headers({
         "Content-Disposition": 'attachment; filename="response"',
       })
-      .send(file);
+      .send(fileReadStream);
   }
 
   @UseGuards(LocalAuthGuard)

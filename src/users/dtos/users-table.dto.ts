@@ -16,6 +16,7 @@ const UserRowSchema = z
     warn: z.number(),
     ban: z.boolean(),
     online: z.boolean(),
+    private_access: z.boolean(),
   })
   .merge(UserSchema);
 
